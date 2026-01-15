@@ -249,20 +249,6 @@
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
 						<version>0.8.11</version>
-						<configuration>
-							<excludes>
-								<!-- Exclude main application class (just bootstrap) -->
-								<exclude>com/ivamare/SqlRunnerApplication.class</exclude>
-								<!-- Exclude configuration classes -->
-								<exclude>com/ivamare/config/**</exclude>
-								<!-- Exclude DTOs (no logic) -->
-								<exclude>com/ivamare/dto/**</exclude>
-								<!-- Exclude domain entities (just data) -->
-								<exclude>com/ivamare/domain/**</exclude>
-								<!-- Exclude repositories (interfaces) -->
-								<exclude>com/ivamare/repository/**</exclude>
-							</excludes>
-						</configuration>
 						<executions>
 							<execution>
 								<goals>
