@@ -25,9 +25,17 @@ chore/update-dependencies    # Maintenance tasks
 
 ### Commit Message Format (Conventional Commits)
 ```
-<type>(<scope>): <description> [<issue-ref>]
+<type>(<scope>): <description>
 
-Types:
+<optional body>
+
+closes #X
+closes #Y
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+**Types:**
 - feat:     New feature
 - fix:      Bug fix
 - refactor: Code refactoring
@@ -36,11 +44,30 @@ Types:
 - chore:    Build, CI, dependencies
 - style:    Formatting (no code change)
 
-Examples:
-- feat(auth): implement LDAP bind authentication [F001-S001]
-- fix(query): handle null parameter values [BUG-042]
-- test(execution): add coverage for CSV export [F003-S002]
-- chore(deps): upgrade Spring Boot to 3.5.9
+**Closing Issues:**
+- Each issue MUST be closed separately with `closes #X` on its own line
+- Use `closes` (not `fixes` or `resolves`) for consistency
+- Multiple issues = multiple `closes` lines
+
+**Examples:**
+```
+feat(auth): implement LDAP bind authentication
+
+- Added LDAP configuration
+- Created login form
+
+closes #2
+closes #3
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+```
+fix(query): handle null parameter values
+
+closes #42
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
 
 ## Code Quality
@@ -86,9 +113,13 @@ src/main/java/com/ivamare/
 - Stories: #2-#9 (F001-S001 through F001-S008)
 
 ### Linking Commits to Issues
-Always reference the story issue in commit messages:
+Always close issues in commit messages using `closes #X` format:
 ```
-feat(project): initialize Spring Boot 3.5.9 project [#2]
+feat(project): initialize Spring Boot 3.5.9 project
+
+closes #2
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
 
 ## Testing
