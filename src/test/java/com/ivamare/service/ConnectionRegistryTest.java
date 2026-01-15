@@ -115,4 +115,17 @@ class ConnectionRegistryTest {
 
     assertThat(config).isNull();
   }
+
+  @Test
+  void listConnections_showsConnectedStatusWhenPoolIsRunning() {
+    // First, get the datasource to create the pool
+    connectionRegistry.getDataSource("test-h2");
+
+    // Now check that listConnections shows it as connected
+    List<ConnectionInfo> connections = connectionRegistry.listConnections();
+    ConnectionInfo testH2 =
+        connections.stream().filter(c -> "test-h2".equals(c.getId())).findFirst().orElseThrow();
+
+    assertThat(testH2.isConnected()).isTrue();
+  }
 }
