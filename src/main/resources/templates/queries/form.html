@@ -2,22 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::content})}">
-<!-- CodeMirror CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-<style>
-    .CodeMirror {
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        font-size: 14px;
-        height: auto;
-    }
-    .CodeMirror-focused {
-        border-color: #003168;
-        box-shadow: 0 0 0 1px #003168;
-    }
-</style>
 <div th:fragment="content">
+    <!-- CodeMirror CSS (must be inside content fragment) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <style>
+        .CodeMirror {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 14px;
+            height: auto;
+        }
+        .CodeMirror-focused {
+            border-color: #003168;
+            box-shadow: 0 0 0 1px #003168;
+        }
+    </style>
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
         <div>
