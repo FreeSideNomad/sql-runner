@@ -55,6 +55,10 @@ public class QueryConfigValidator {
                 .collect(Collectors.toSet())
             : Set.of();
 
+    // Common validation for all UPDATE_WORKFLOW queries
+    validateCommonConfig(config, result);
+
+    // Mode-specific validation
     switch (mode) {
       case BATCH -> validateBatchMode(config, updateParams, result);
       case ROW_BY_ROW -> validateRowByRowMode(config, updateParams, selectColumns, result);
@@ -64,15 +68,24 @@ public class QueryConfigValidator {
     return result;
   }
 
+  private void validateCommonConfig(QueryConfigFormDto config, ValidationResult result) {
+    // Primary key column is required for backup/rollback functionality
+    if (config.getPrimaryKeyColumn() == null || config.getPrimaryKeyColumn().isBlank()) {
+      result.addError("Primary Key Column is required for UPDATE_WORKFLOW queries");
+    }
+
+    // Rollback columns are required for rollback functionality
+    if (config.getRollbackColumns() == null || config.getRollbackColumns().isBlank()) {
+      result.addError(
+          "Rollback Columns are required for UPDATE_WORKFLOW queries (columns to restore on rollback)");
+    }
+  }
+
   private void validateBatchMode(
       QueryConfigFormDto config, Set<String> updateParams, ValidationResult result) {
 
     if (!updateParams.contains("id_list")) {
       result.addError("Batch mode requires :id_list parameter in UPDATE SQL");
-    }
-
-    if (config.getPrimaryKeyColumn() == null || config.getPrimaryKeyColumn().isBlank()) {
-      result.addError("Batch mode requires Primary Key Column to be defined");
     }
   }
 

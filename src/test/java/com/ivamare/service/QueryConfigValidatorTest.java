@@ -59,6 +59,58 @@ class QueryConfigValidatorTest {
       assertThat(result.hasErrors()).isTrue();
       assertThat(result.getErrors()).containsExactly("Invalid update binding mode: INVALID_MODE");
     }
+
+    @Test
+    void returnsError_whenPrimaryKeyColumnMissing() {
+      QueryConfigFormDto config = new QueryConfigFormDto();
+      config.setUpdateBindingMode("STANDARD");
+      config.setUpdateSql("UPDATE test SET status = :status");
+      config.setPrimaryKeyColumn(null);
+      config.setRollbackColumns("status");
+
+      QueryConfigValidator.ValidationResult result =
+          validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
+
+      assertThat(result.hasErrors()).isTrue();
+      assertThat(result.getErrors())
+          .contains("Primary Key Column is required for UPDATE_WORKFLOW queries");
+    }
+
+    @Test
+    void returnsError_whenRollbackColumnsMissing() {
+      QueryConfigFormDto config = new QueryConfigFormDto();
+      config.setUpdateBindingMode("STANDARD");
+      config.setUpdateSql("UPDATE test SET status = :status");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns(null);
+
+      QueryConfigValidator.ValidationResult result =
+          validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
+
+      assertThat(result.hasErrors()).isTrue();
+      assertThat(result.getErrors())
+          .contains(
+              "Rollback Columns are required for UPDATE_WORKFLOW queries (columns to restore on rollback)");
+    }
+
+    @Test
+    void returnsError_whenBothPrimaryKeyAndRollbackColumnsMissing() {
+      QueryConfigFormDto config = new QueryConfigFormDto();
+      config.setUpdateBindingMode("STANDARD");
+      config.setUpdateSql("UPDATE test SET status = :status");
+      config.setPrimaryKeyColumn("");
+      config.setRollbackColumns("  ");
+
+      QueryConfigValidator.ValidationResult result =
+          validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
+
+      assertThat(result.hasErrors()).isTrue();
+      assertThat(result.getErrors()).hasSize(2);
+      assertThat(result.getErrors())
+          .contains(
+              "Primary Key Column is required for UPDATE_WORKFLOW queries",
+              "Rollback Columns are required for UPDATE_WORKFLOW queries (columns to restore on rollback)");
+    }
   }
 
   @Nested
@@ -70,6 +122,7 @@ class QueryConfigValidatorTest {
       config.setUpdateBindingMode("BATCH");
       config.setUpdateSql("UPDATE test SET status = :status WHERE id = :id");
       config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
@@ -85,31 +138,51 @@ class QueryConfigValidatorTest {
       config.setUpdateBindingMode("BATCH");
       config.setUpdateSql("UPDATE test SET status = :status WHERE id IN (:id_list)");
       config.setPrimaryKeyColumn(null);
+      config.setRollbackColumns("status");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
 
       assertThat(result.hasErrors()).isTrue();
       assertThat(result.getErrors())
-          .containsExactly("Batch mode requires Primary Key Column to be defined");
+          .containsExactly("Primary Key Column is required for UPDATE_WORKFLOW queries");
     }
 
     @Test
-    void returnsMultipleErrors_whenBothIdListAndPrimaryKeyMissing() {
+    void returnsError_whenRollbackColumnsMissing() {
+      QueryConfigFormDto config = new QueryConfigFormDto();
+      config.setUpdateBindingMode("BATCH");
+      config.setUpdateSql("UPDATE test SET status = :status WHERE id IN (:id_list)");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns(null);
+
+      QueryConfigValidator.ValidationResult result =
+          validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
+
+      assertThat(result.hasErrors()).isTrue();
+      assertThat(result.getErrors())
+          .containsExactly(
+              "Rollback Columns are required for UPDATE_WORKFLOW queries (columns to restore on rollback)");
+    }
+
+    @Test
+    void returnsMultipleErrors_whenBothIdListAndRequiredFieldsMissing() {
       QueryConfigFormDto config = new QueryConfigFormDto();
       config.setUpdateBindingMode("BATCH");
       config.setUpdateSql("UPDATE test SET status = :status WHERE id = :id");
       config.setPrimaryKeyColumn("");
+      config.setRollbackColumns("");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
 
       assertThat(result.hasErrors()).isTrue();
-      assertThat(result.getErrors()).hasSize(2);
+      assertThat(result.getErrors()).hasSize(3);
       assertThat(result.getErrors())
           .contains(
-              "Batch mode requires :id_list parameter in UPDATE SQL",
-              "Batch mode requires Primary Key Column to be defined");
+              "Primary Key Column is required for UPDATE_WORKFLOW queries",
+              "Rollback Columns are required for UPDATE_WORKFLOW queries (columns to restore on rollback)",
+              "Batch mode requires :id_list parameter in UPDATE SQL");
     }
 
     @Test
@@ -118,6 +191,7 @@ class QueryConfigValidatorTest {
       config.setUpdateBindingMode("BATCH");
       config.setUpdateSql("UPDATE test SET status = :status WHERE id IN (:id_list)");
       config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
@@ -135,6 +209,8 @@ class QueryConfigValidatorTest {
       config.setUpdateBindingMode("ROW_BY_ROW");
       config.setSelectSql("SELECT id, name FROM test");
       config.setUpdateSql("UPDATE test SET status = :newStatus WHERE region = :region");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
@@ -152,6 +228,7 @@ class QueryConfigValidatorTest {
       config.setSelectSql("SELECT id, name FROM test");
       config.setUpdateSql("UPDATE test SET name = UPPER(:name) WHERE id = :id");
       config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("name");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
@@ -167,6 +244,7 @@ class QueryConfigValidatorTest {
       config.setSelectSql("SELECT id, name FROM test");
       config.setUpdateSql("UPDATE test SET name = UPPER(:name)");
       config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("name");
 
       QueryConfigValidator.ValidationResult result =
           validator.validateUpdateConfig(config, QueryType.UPDATE_WORKFLOW);
@@ -186,6 +264,8 @@ class QueryConfigValidatorTest {
       QueryConfigFormDto config = new QueryConfigFormDto();
       config.setUpdateBindingMode("STANDARD");
       config.setUpdateSql("UPDATE test SET status = :newStatus WHERE region = :region");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
 
       QueryConfigFormDto.ParameterFormDto param1 = new QueryConfigFormDto.ParameterFormDto();
       param1.setName("newStatus");
@@ -205,6 +285,8 @@ class QueryConfigValidatorTest {
       QueryConfigFormDto config = new QueryConfigFormDto();
       config.setUpdateBindingMode("STANDARD");
       config.setUpdateSql("UPDATE test SET status = :newStatus WHERE region = :region");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
       config.setParameters(List.of());
 
       QueryConfigValidator.ValidationResult result =
@@ -223,6 +305,8 @@ class QueryConfigValidatorTest {
       QueryConfigFormDto config = new QueryConfigFormDto();
       config.setUpdateBindingMode("STANDARD");
       config.setUpdateSql("UPDATE test SET status = :status");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
       config.setParameters(null);
 
       QueryConfigValidator.ValidationResult result =
@@ -237,6 +321,8 @@ class QueryConfigValidatorTest {
       QueryConfigFormDto config = new QueryConfigFormDto();
       config.setUpdateBindingMode("STANDARD");
       config.setUpdateSql("UPDATE test SET status = :status");
+      config.setPrimaryKeyColumn("id");
+      config.setRollbackColumns("status");
 
       QueryConfigFormDto.ParameterFormDto param1 = new QueryConfigFormDto.ParameterFormDto();
       param1.setName("");
