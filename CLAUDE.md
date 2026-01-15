@@ -143,9 +143,11 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ## Testing
 
-### Test Databases
-- SQL Server, PostgreSQL, DB2 via TestContainers
-- Test data: ~10,000 customers, ~25,000 accounts, ~100,000 transactions
+### Database Strategy
+- **Unit/Integration Tests**: H2 in-memory database
+- **Local Development**: SQL Server via docker-compose
+- **Authentication Tests**: Embedded LDAP (UnboundID)
+- No TestContainers - use H2 for all automated tests
 
 ### Running Tests
 ```bash
