@@ -67,18 +67,20 @@ class QueryControllerTest {
             .queryType(QueryType.SELECT)
             .build();
 
-    when(queryService.getAllQueriesSortedByName()).thenReturn(List.of(query));
+    when(queryService.getQueriesGroupedByConnectionAndCategory())
+        .thenReturn(Map.of("test-conn", Map.of("Test", List.of(query))));
 
     mockMvc
         .perform(get("/queries").with(user("testuser").roles("SELECT_RUNNER")))
         .andExpect(status().isOk())
         .andExpect(view().name("queries/list"))
-        .andExpect(model().attributeExists("queries"));
+        .andExpect(model().attributeExists("groupedQueries"));
   }
 
   @Test
   void listQueries_withEmptyList_shouldReturnEmptyPage() throws Exception {
-    when(queryService.getAllQueriesSortedByName()).thenReturn(Collections.emptyList());
+    when(queryService.getQueriesGroupedByConnectionAndCategory())
+        .thenReturn(Collections.emptyMap());
 
     mockMvc
         .perform(get("/queries").with(user("testuser").roles("SELECT_RUNNER")))

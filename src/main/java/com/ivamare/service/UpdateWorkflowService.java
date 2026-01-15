@@ -476,19 +476,20 @@ public class UpdateWorkflowService {
       }
 
       // Generate and execute rollback UPDATEs for each row
+      String rollbackSql = generateRollbackSql(query, config, pkColumn, rollbackColumns);
       for (Map<String, Object> row : backupData) {
-        Object pkValue = row.get(pkColumn);
+        Object pkValue = getColumnValueCaseInsensitive(row, pkColumn);
         if (pkValue == null) {
           log.warn("Skipping row with null primary key value");
           continue;
         }
 
-        String rollbackSql = generateRollbackSql(query, config, pkColumn, rollbackColumns);
         Map<String, Object> rollbackParams = new HashMap<>();
-        rollbackParams.put("pk_value", pkValue);
+        // Use the actual PK column name as the parameter key
+        rollbackParams.put(pkColumn, pkValue);
 
         for (String col : rollbackColumns) {
-          rollbackParams.put(col, row.get(col));
+          rollbackParams.put(col, getColumnValueCaseInsensitive(row, col));
         }
 
         jdbc.update(rollbackSql, rollbackParams);
@@ -701,7 +702,8 @@ public class UpdateWorkflowService {
       first = false;
     }
 
-    sql.append(" WHERE ").append(pkColumn).append(" = :pk_value");
+    // Use the actual PK column name as parameter name so script generator can resolve it
+    sql.append(" WHERE ").append(pkColumn).append(" = :").append(pkColumn);
 
     return sql.toString();
   }

@@ -40,7 +40,7 @@ public class QueryController {
 
   @GetMapping
   public String listQueries(Model model) {
-    model.addAttribute("queries", queryService.getAllQueriesSortedByName());
+    model.addAttribute("groupedQueries", queryService.getQueriesGroupedByConnectionAndCategory());
     model.addAttribute("pageTitle", "Queries");
     model.addAttribute("readOnlyMode", readOnlyMode);
     return "queries/list";
