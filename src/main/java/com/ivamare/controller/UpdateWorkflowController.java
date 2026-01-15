@@ -188,6 +188,50 @@ public class UpdateWorkflowController {
     return "queries/update-workflow";
   }
 
+  /** Download SQL script for the update operation. */
+  @GetMapping("/{id}/update/download-script")
+  @SuppressWarnings("unchecked")
+  public void downloadUpdateScript(
+      @PathVariable String id, HttpSession session, HttpServletResponse response)
+      throws IOException {
+
+    List<Map<String, Object>> previewData =
+        (List<Map<String, Object>>) session.getAttribute(SESSION_PREVIEW_DATA);
+    Map<String, String> params = (Map<String, String>) session.getAttribute(SESSION_PREVIEW_PARAMS);
+
+    if (previewData == null || params == null) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Preview data expired");
+      return;
+    }
+
+    var queryDto = queryService.getQueryDto(id);
+    String script = updateWorkflowService.generateUpdateScript(id, params, previewData);
+
+    String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_update.sql";
+    downloadText(response, script, filename);
+  }
+
+  /** Download SQL script for the rollback operation. */
+  @GetMapping("/{id}/update/rollback/{executionLogId}/download-script")
+  public void downloadRollbackScript(
+      @PathVariable String id, @PathVariable String executionLogId, HttpServletResponse response)
+      throws IOException {
+
+    var queryDto = queryService.getQueryDto(id);
+    String script = updateWorkflowService.generateRollbackScript(executionLogId);
+
+    String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_rollback.sql";
+    downloadText(response, script, filename);
+  }
+
+  private void downloadText(HttpServletResponse response, String text, String filename)
+      throws IOException {
+    response.setContentType("text/plain; charset=UTF-8");
+    response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    response.getWriter().write(text);
+    response.getWriter().flush();
+  }
+
   /** Execute rollback for a previous update. */
   @PostMapping("/update/rollback/{executionLogId}")
   public String executeRollback(

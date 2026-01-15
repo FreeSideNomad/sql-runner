@@ -27,10 +27,12 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Tests for QueryController. */
@@ -42,8 +44,19 @@ class QueryControllerTest {
   @MockBean private QueryService queryService;
   @MockBean private ConnectionRegistry connectionRegistry;
   @MockBean private QueryExecutionService executionService;
+  @MockBean private com.ivamare.service.QueryConfigValidator configValidator;
+
+  @BeforeEach
+  void setUp() {
+    // Fix Thymeleaf NPE by providing default available parameters
+    when(configValidator.getAvailableParameters(any()))
+        .thenReturn(
+            new com.ivamare.service.QueryConfigValidator.AvailableParameters(
+                java.util.Set.of("param1"), java.util.Set.of("col1")));
+  }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void listQueries_shouldReturnQueriesPage() throws Exception {
     QueryDto query =
         QueryDto.builder()

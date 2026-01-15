@@ -1,5 +1,6 @@
 package com.ivamare.dto;
 
+import com.ivamare.domain.UpdateBindingMode;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,7 @@ public class QueryConfig {
   private String sql;
   private String selectSql;
   private String updateSql;
+  private UpdateBindingMode updateBindingMode;
   private List<ParameterConfig> parameters;
   private String primaryKeyColumn;
   private List<String> backupColumns;

@@ -35,6 +35,7 @@ public class QueryController {
   private final QueryService queryService;
   private final ConnectionRegistry connectionRegistry;
   private final QueryExecutionService executionService;
+  private final com.ivamare.service.QueryConfigValidator configValidator;
 
   @Value("${sqlrunner.read-only-mode:false}")
   private boolean readOnlyMode;
@@ -68,6 +69,8 @@ public class QueryController {
     model.addAttribute("connections", connectionRegistry.listConnections());
     model.addAttribute("categories", queryService.getAllCategories());
     model.addAttribute("parameterTypes", ParameterType.values());
+    model.addAttribute(
+        "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
     model.addAttribute("isEdit", false);
     model.addAttribute("pageTitle", "New Query");
     return "queries/form";
@@ -87,6 +90,8 @@ public class QueryController {
     model.addAttribute("connections", connectionRegistry.listConnections());
     model.addAttribute("categories", queryService.getAllCategories());
     model.addAttribute("parameterTypes", ParameterType.values());
+    model.addAttribute(
+        "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
     model.addAttribute("isEdit", true);
     model.addAttribute("pageTitle", "Edit Query");
     return "queries/form";
@@ -106,11 +111,27 @@ public class QueryController {
       return "redirect:/queries";
     }
 
+    // Custom validation for UPDATE_WORKFLOW
+    if (form.getQueryType() == com.ivamare.domain.QueryType.UPDATE_WORKFLOW) {
+      com.ivamare.service.QueryConfigValidator.ValidationResult validationResult =
+          configValidator.validateUpdateConfig(form.getConfig(), form.getQueryType());
+      if (validationResult.hasErrors()) {
+        for (String error : validationResult.getErrors()) {
+          result.reject("config", error);
+        }
+      }
+      if (validationResult.hasWarnings()) {
+        model.addAttribute("warnings", validationResult.getWarnings());
+      }
+    }
+
     if (result.hasErrors()) {
       form.ensureConfigInitialized();
       model.addAttribute("connections", connectionRegistry.listConnections());
       model.addAttribute("categories", queryService.getAllCategories());
       model.addAttribute("parameterTypes", ParameterType.values());
+      model.addAttribute(
+          "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
       model.addAttribute("isEdit", form.isEdit());
       model.addAttribute("pageTitle", form.isEdit() ? "Edit Query" : "New Query");
       return "queries/form";
