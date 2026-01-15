@@ -214,14 +214,32 @@ public class UpdateWorkflowController {
   /** Download SQL script for the rollback operation. */
   @GetMapping("/{id}/update/rollback/{executionLogId}/download-script")
   public void downloadRollbackScript(
-      @PathVariable String id, @PathVariable String executionLogId, HttpServletResponse response)
+      @PathVariable String id,
+      @PathVariable String executionLogId,
+      HttpServletResponse response,
+      RedirectAttributes redirectAttributes)
       throws IOException {
 
     var queryDto = queryService.getQueryDto(id);
-    String script = updateWorkflowService.generateRollbackScript(executionLogId);
 
-    String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_rollback.sql";
-    downloadText(response, script, filename);
+    try {
+      String script = updateWorkflowService.generateRollbackScript(executionLogId);
+      String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_rollback.sql";
+      downloadText(response, script, filename);
+    } catch (IllegalStateException e) {
+      // Missing rollback configuration - return error as plain text
+      response.setContentType("text/plain; charset=UTF-8");
+      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      response
+          .getWriter()
+          .write(
+              "Cannot generate rollback script: "
+                  + e.getMessage()
+                  + "\n\nPlease ensure the query configuration includes:\n"
+                  + "- primaryKeyColumn: the column used to identify rows\n"
+                  + "- rollbackColumns: the columns to restore during rollback");
+      response.getWriter().flush();
+    }
   }
 
   private void downloadText(HttpServletResponse response, String text, String filename)

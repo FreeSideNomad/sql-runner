@@ -602,8 +602,13 @@ public class UpdateWorkflowService {
     String pkColumn = config.getPrimaryKeyColumn();
     List<String> rollbackColumns = config.getRollbackColumns();
 
-    if (pkColumn == null || rollbackColumns == null || rollbackColumns.isEmpty()) {
-      throw new IllegalStateException("Missing rollback configuration");
+    if (pkColumn == null) {
+      throw new IllegalStateException(
+          "Missing rollback configuration: primaryKeyColumn is not defined");
+    }
+    if (rollbackColumns == null || rollbackColumns.isEmpty()) {
+      throw new IllegalStateException(
+          "Missing rollback configuration: rollbackColumns is not defined or empty");
     }
 
     String rollbackSql = generateRollbackSql(query, config, pkColumn, rollbackColumns);
