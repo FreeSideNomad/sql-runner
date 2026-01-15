@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content})}">
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-rbc-blue" th:text="${isEdit ? 'Edit Query' : 'New Query'}">Query Form</h1>
+            <p class="text-gray-600 mt-1" th:text="${isEdit ? 'Update query configuration' : 'Create a new query template'}">Form description</p>
+        </div>
+        <a th:href="@{/queries}" class="text-gray-600 hover:text-gray-800">
+            &larr; Back to Queries
+        </a>
+    </div>
+
+    <!-- Form -->
+    <form th:action="@{/queries/save}" method="post" th:object="${query}" class="bg-white rounded-lg shadow-md p-6">
+        <input type="hidden" th:field="*{id}">
+
+        <!-- Validation Errors Summary -->
+        <div th:if="${#fields.hasErrors('*')}" class="mb-6 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p class="font-semibold">Please correct the following errors:</p>
+            <ul class="list-disc list-inside mt-2">
+                <li th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</li>
+            </ul>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input type="text" id="name" th:field="*{name}" required
+                       th:classappend="${#fields.hasErrors('name')} ? 'border-red-500' : ''"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-red-500 text-sm mt-1">Error</p>
+            </div>
+
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <input type="text" id="category" th:field="*{category}" required list="categoryList"
+                       th:classappend="${#fields.hasErrors('category')} ? 'border-red-500' : ''"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                       placeholder="Select or enter a new category">
+                <datalist id="categoryList">
+                    <option th:each="cat : ${categories}" th:value="${cat}">
+                </datalist>
+                <p th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="text-red-500 text-sm mt-1">Error</p>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="description" th:field="*{description}" rows="2"
+                      th:classappend="${#fields.hasErrors('description')} ? 'border-red-500' : ''"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                      placeholder="Brief description of what this query does"></textarea>
+            <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-red-500 text-sm mt-1">Error</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="connectionName" class="block text-sm font-medium text-gray-700 mb-1">Connection *</label>
+                <select id="connectionName" th:field="*{connectionName}" required
+                        th:classappend="${#fields.hasErrors('connectionName')} ? 'border-red-500' : ''"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                    <option value="">Select a connection</option>
+                    <option th:each="conn : ${connections}" th:value="${conn.id}" th:text="${conn.name}">Connection</option>
+                </select>
+                <p th:if="${#fields.hasErrors('connectionName')}" th:errors="*{connectionName}" class="text-red-500 text-sm mt-1">Error</p>
+                <p th:if="${connections.empty}" class="text-yellow-600 text-sm mt-1">
+                    No connections configured. Contact an administrator to set up database connections.
+                </p>
+            </div>
+
+            <div>
+                <label for="queryType" class="block text-sm font-medium text-gray-700 mb-1">Query Type *</label>
+                <select id="queryType" th:field="*{queryType}" required
+                        th:classappend="${#fields.hasErrors('queryType')} ? 'border-red-500' : ''"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                    <option value="">Select a type</option>
+                    <option value="SELECT">SELECT - Read-only queries</option>
+                    <option value="UPDATE_WORKFLOW">UPDATE WORKFLOW - Queries with backup/rollback</option>
+                </select>
+                <p th:if="${#fields.hasErrors('queryType')}" th:errors="*{queryType}" class="text-red-500 text-sm mt-1">Error</p>
+            </div>
+        </div>
+
+        <!-- Configuration YAML -->
+        <div class="mb-6">
+            <label for="configYaml" class="block text-sm font-medium text-gray-700 mb-1">Configuration (YAML) *</label>
+            <div class="text-xs text-gray-500 mb-2">
+                Define the SQL query and parameters using YAML format.
+                <a href="#" class="text-rbc-blue hover:underline" onclick="toggleYamlHelp(); return false;">Show example</a>
+            </div>
+            <div id="yamlHelp" class="hidden mb-2 bg-gray-50 p-3 rounded text-xs font-mono">
+<pre>sql: |
+  SELECT * FROM customers
+  WHERE region = :region
+  AND status = :status
+
+parameters:
+  - name: region
+    label: Region
+    type: STRING
+    required: true
+  - name: status
+    label: Status
+    type: ENUM
+    required: true
+    enumValues:
+      - ACTIVE
+      - INACTIVE
+      - PENDING</pre>
+            </div>
+            <textarea id="configYaml" th:field="*{configYaml}" rows="15" required
+                      th:classappend="${#fields.hasErrors('configYaml')} ? 'border-red-500' : ''"
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                      placeholder="sql: |
+  SELECT * FROM table WHERE id = :id
+
+parameters:
+  - name: id
+    label: Record ID
+    type: STRING
+    required: true"></textarea>
+            <p th:if="${#fields.hasErrors('configYaml')}" th:errors="*{configYaml}" class="text-red-500 text-sm mt-1">Error</p>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-4 pt-4 border-t">
+            <a th:href="@{/queries}" class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                Cancel
+            </a>
+            <button type="submit" class="px-6 py-2 bg-rbc-blue text-white font-medium rounded-lg hover:bg-rbc-light-blue transition">
+                <span th:text="${isEdit ? 'Update Query' : 'Create Query'}">Save</span>
+            </button>
+        </div>
+    </form>
+
+    <script>
+        function toggleYamlHelp() {
+            const help = document.getElementById('yamlHelp');
+            help.classList.toggle('hidden');
+        }
+    </script>
+</div>
+</html>
