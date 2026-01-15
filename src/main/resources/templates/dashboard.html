@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Runner - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .rbc-blue { background-color: #003168; }
+        .rbc-yellow { background-color: #FFD200; }
+        .rbc-blue-text { color: #003168; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="rbc-blue text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">SQL Runner</h1>
+                    <span class="text-gray-300">|</span>
+                    <a href="/queries" class="hover:text-yellow-300">Queries</a>
+                    <a href="/history" class="hover:text-yellow-300">History</a>
+                    <a href="/admin" sec:authorize="hasRole('ADMIN')" class="hover:text-yellow-300">Admin</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">
+                        Welcome, <span sec:authentication="name">User</span>
+                        <span class="text-gray-400" sec:authentication="authorities">[ROLE]</span>
+                    </span>
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="rbc-yellow text-gray-900 px-4 py-1 rounded hover:bg-yellow-400 transition">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold rbc-blue-text mb-4">Welcome to SQL Runner</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <!-- Queries Card -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Queries</h3>
+                    <p class="text-gray-600 mb-4">Browse and execute parameterized SQL queries.</p>
+                    <a href="/queries" class="text-blue-600 hover:underline">View Queries &rarr;</a>
+                </div>
+
+                <!-- History Card -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Execution History</h3>
+                    <p class="text-gray-600 mb-4">View past query executions and audit logs.</p>
+                    <a href="/history" class="text-blue-600 hover:underline">View History &rarr;</a>
+                </div>
+
+                <!-- Admin Card (visible only to admins) -->
+                <div sec:authorize="hasRole('ADMIN')" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Administration</h3>
+                    <p class="text-gray-600 mb-4">Manage queries, connections, and settings.</p>
+                    <a href="/admin" class="text-blue-600 hover:underline">Admin Panel &rarr;</a>
+                </div>
+            </div>
+
+            <!-- Role Information -->
+            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-semibold rbc-blue-text">Your Permissions:</h4>
+                <ul class="mt-2 text-sm text-gray-700">
+                    <li sec:authorize="hasRole('ADMIN')">Full administrative access</li>
+                    <li sec:authorize="hasRole('UPDATE_RUNNER')">Execute SELECT and UPDATE queries</li>
+                    <li sec:authorize="hasRole('SELECT_RUNNER')">Execute SELECT queries only</li>
+                    <li>View execution history</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
