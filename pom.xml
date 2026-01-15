@@ -103,7 +103,17 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<scope>test</scope>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Flyway for database migrations -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-sqlserver</artifactId>
 		</dependency>
 
 		<!-- YAML Processing -->
@@ -230,6 +240,10 @@
 								<exclude>com/ivamare/config/**</exclude>
 								<!-- Exclude DTOs (no logic) -->
 								<exclude>com/ivamare/dto/**</exclude>
+								<!-- Exclude domain entities (just data) -->
+								<exclude>com/ivamare/domain/**</exclude>
+								<!-- Exclude repositories (interfaces) -->
+								<exclude>com/ivamare/repository/**</exclude>
 							</excludes>
 						</configuration>
 						<executions>

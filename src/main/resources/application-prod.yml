@@ -1,0 +1,33 @@
+# Production profile
+spring:
+  datasource:
+    url: ${SQLSERVER_URL}
+    username: ${SQLSERVER_USER}
+    password: ${SQLSERVER_PASSWORD}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  flyway:
+    locations: classpath:db/migration
+
+  h2:
+    console:
+      enabled: false
+
+  thymeleaf:
+    cache: true
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+
+sqlrunner:
+  read-only-mode: true
