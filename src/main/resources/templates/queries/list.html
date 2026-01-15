@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content})}">
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-rbc-blue">Queries</h1>
+            <p class="text-gray-600 mt-1">Browse and execute parameterized queries</p>
+        </div>
+        <a th:href="@{/admin/queries/new}" sec:authorize="hasRole('ADMIN')"
+           class="px-4 py-2 bg-rbc-yellow text-rbc-blue font-semibold rounded-lg hover:bg-yellow-400 transition">
+            + New Query
+        </a>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-medium text-gray-700">Category:</label>
+            <select class="border border-gray-300 rounded-md px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                <option value="">All Categories</option>
+                <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}">Category</option>
+            </select>
+
+            <label class="text-sm font-medium text-gray-700 ml-4">Type:</label>
+            <select class="border border-gray-300 rounded-md px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                <option value="">All Types</option>
+                <option value="SELECT">SELECT</option>
+                <option value="UPDATE_WORKFLOW">UPDATE WORKFLOW</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Queries List -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div th:if="${queries == null or queries.empty}" class="p-8 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+            <p class="text-lg">No queries available</p>
+            <p class="text-sm mt-2">Contact an administrator to create query templates.</p>
+        </div>
+
+        <table th:unless="${queries == null or queries.empty}" class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <tr th:each="query : ${queries}" class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900" th:text="${query.name}">Query Name</div>
+                        <div class="text-sm text-gray-500" th:text="${query.description}">Description</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800"
+                              th:text="${query.category}">Category</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span th:if="${query.queryType.name() == 'SELECT'}"
+                              class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">SELECT</span>
+                        <span th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+                              class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">UPDATE</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500" th:text="${query.connectionName}">Connection</td>
+                    <td class="px-6 py-4 text-right">
+                        <a th:href="@{/queries/{id}/execute(id=${query.id})}"
+                           class="text-rbc-blue hover:underline font-medium">Execute</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</html>

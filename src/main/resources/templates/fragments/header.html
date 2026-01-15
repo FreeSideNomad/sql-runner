@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<header th:fragment="header" class="bg-rbc-blue text-white shadow-lg fixed top-0 left-0 right-0 z-50">
+    <div class="flex items-center justify-between px-6 h-16">
+        <!-- Logo and App Name -->
+        <div class="flex items-center space-x-3">
+            <svg class="w-8 h-8 text-rbc-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+            </svg>
+            <span class="text-xl font-bold">SQL Runner</span>
+        </div>
+
+        <!-- User Info and Actions -->
+        <div class="flex items-center space-x-4">
+            <!-- User Name -->
+            <span sec:authorize="isAuthenticated()" class="text-sm">
+                Welcome, <span sec:authentication="name" class="font-semibold">User</span>
+            </span>
+
+            <!-- Role Badge -->
+            <span th:if="${userRole != null}"
+                  class="px-2 py-1 text-xs rounded bg-rbc-yellow text-rbc-blue font-semibold"
+                  th:text="${userRole}">ROLE</span>
+
+            <!-- Logout Button -->
+            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+                <button type="submit"
+                        class="flex items-center space-x-1 px-3 py-1 rounded hover:bg-rbc-light-blue transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+</html>

@@ -1,82 +1,129 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Runner - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .rbc-blue { background-color: #003168; }
-        .rbc-yellow { background-color: #FFD200; }
-        .rbc-blue-text { color: #003168; }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navigation -->
-    <nav class="rbc-blue text-white shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-xl font-bold">SQL Runner</h1>
-                    <span class="text-gray-300">|</span>
-                    <a href="/queries" class="hover:text-yellow-300">Queries</a>
-                    <a href="/history" class="hover:text-yellow-300">History</a>
-                    <a href="/admin" sec:authorize="hasRole('ADMIN')" class="hover:text-yellow-300">Admin</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm">
-                        Welcome, <span sec:authentication="name">User</span>
-                        <span class="text-gray-400" sec:authentication="authorities">[ROLE]</span>
-                    </span>
-                    <form th:action="@{/logout}" method="post" class="inline">
-                        <button type="submit" class="rbc-yellow text-gray-900 px-4 py-1 rounded hover:bg-yellow-400 transition">
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </nav>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content})}">
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-rbc-blue">Dashboard</h1>
+        <p class="text-gray-600 mt-1">Welcome to SQL Runner</p>
+    </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Queries Card -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-bold rbc-blue-text mb-4">Welcome to SQL Runner</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                <!-- Queries Card -->
-                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Queries</h3>
-                    <p class="text-gray-600 mb-4">Browse and execute parameterized SQL queries.</p>
-                    <a href="/queries" class="text-blue-600 hover:underline">View Queries &rarr;</a>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 uppercase tracking-wide">Active Queries</p>
+                    <p class="text-3xl font-bold text-rbc-blue mt-1" th:text="${queryCount ?: 0}">0</p>
                 </div>
-
-                <!-- History Card -->
-                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Execution History</h3>
-                    <p class="text-gray-600 mb-4">View past query executions and audit logs.</p>
-                    <a href="/history" class="text-blue-600 hover:underline">View History &rarr;</a>
-                </div>
-
-                <!-- Admin Card (visible only to admins) -->
-                <div sec:authorize="hasRole('ADMIN')" class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Administration</h3>
-                    <p class="text-gray-600 mb-4">Manage queries, connections, and settings.</p>
-                    <a href="/admin" class="text-blue-600 hover:underline">Admin Panel &rarr;</a>
+                <div class="p-3 bg-blue-50 rounded-full">
+                    <svg class="w-8 h-8 text-rbc-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                    </svg>
                 </div>
             </div>
-
-            <!-- Role Information -->
-            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-                <h4 class="font-semibold rbc-blue-text">Your Permissions:</h4>
-                <ul class="mt-2 text-sm text-gray-700">
-                    <li sec:authorize="hasRole('ADMIN')">Full administrative access</li>
-                    <li sec:authorize="hasRole('UPDATE_RUNNER')">Execute SELECT and UPDATE queries</li>
-                    <li sec:authorize="hasRole('SELECT_RUNNER')">Execute SELECT queries only</li>
-                    <li>View execution history</li>
-                </ul>
-            </div>
+            <a th:href="@{/queries}" class="text-sm text-rbc-blue hover:underline mt-4 inline-block">View all queries &rarr;</a>
         </div>
-    </main>
-</body>
+
+        <!-- Recent Executions Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 uppercase tracking-wide">Today's Executions</p>
+                    <p class="text-3xl font-bold text-green-600 mt-1" th:text="${todayExecutions ?: 0}">0</p>
+                </div>
+                <div class="p-3 bg-green-50 rounded-full">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <a th:href="@{/history}" class="text-sm text-rbc-blue hover:underline mt-4 inline-block">View history &rarr;</a>
+        </div>
+
+        <!-- Failed Executions Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500 uppercase tracking-wide">Failed Today</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1" th:text="${failedToday ?: 0}">0</p>
+                </div>
+                <div class="p-3 bg-red-50 rounded-full">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+            <a th:href="@{/history?status=FAILED}" class="text-sm text-rbc-blue hover:underline mt-4 inline-block">View failures &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-rbc-blue mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a th:href="@{/queries}" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-6 h-6 text-rbc-blue mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span class="font-medium text-gray-700">Browse Queries</span>
+            </a>
+
+            <a th:href="@{/history}" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-6 h-6 text-rbc-blue mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="font-medium text-gray-700">View History</span>
+            </a>
+
+            <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')"
+               class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-6 h-6 text-rbc-blue mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="font-medium text-gray-700">Admin Panel</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Role Information -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 class="font-semibold text-rbc-blue">Your Permissions</h3>
+        <ul class="mt-2 text-sm text-gray-700 space-y-1">
+            <li sec:authorize="hasRole('ADMIN')" class="flex items-center">
+                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Full administrative access (create, edit, delete queries and connections)
+            </li>
+            <li sec:authorize="hasAnyRole('ADMIN', 'UPDATE_RUNNER')" class="flex items-center">
+                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Execute UPDATE workflow queries with backup and rollback
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Execute SELECT queries and view results
+            </li>
+            <li class="flex items-center">
+                <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                View execution history and audit logs
+            </li>
+        </ul>
+    </div>
+</div>
 </html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<footer th:fragment="footer" class="bg-white border-t border-gray-200 ml-64">
+    <div class="px-6 py-4 flex items-center justify-between text-sm text-gray-500">
+        <div>
+            <span>SQL Runner</span>
+            <span class="mx-2">|</span>
+            <span th:text="'v' + ${@environment.getProperty('info.app.version', '1.0.0')}">v1.0.0</span>
+        </div>
+        <div>
+            <span>&copy; 2024 SQL Runner. All rights reserved.</span>
+        </div>
+    </div>
+</footer>
+</html>
