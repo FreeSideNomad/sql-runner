@@ -70,3 +70,13 @@ sqlrunner:
       ADMIN: CN=SQLRunner-Admins,OU=Groups,DC=company,DC=com
       UPDATE_RUNNER: CN=SQLRunner-UpdateRunners,OU=Groups,DC=company,DC=com
       SELECT_RUNNER: CN=SQLRunner-SelectRunners,OU=Groups,DC=company,DC=com
+
+  # Database connections for query execution (configure for your environment)
+  # Credentials are resolved from environment variables: {credential-prefix}_USER, {credential-prefix}_PASSWORD
+  # Example configuration for production:
+  #   sqlrunner.connections.databases.main-sqlserver.name=Main SQL Server
+  #   sqlrunner.connections.databases.main-sqlserver.type=SQLSERVER
+  #   sqlrunner.connections.databases.main-sqlserver.host=sqlserver.company.com
+  #   etc.
+  connections:
+    databases: {}
