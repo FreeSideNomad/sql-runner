@@ -1,0 +1,61 @@
+name: User Story
+description: A single implementable unit of work (hours to 1-2 days)
+title: "Story: "
+labels: ["story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Define a user story for implementation.
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: The user story in standard format
+      placeholder: |
+        **As a** [role]
+        **I want** [capability]
+        **So that** [benefit]
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Given/When/Then scenarios
+      placeholder: |
+        - [ ] Given/When/Then scenario 1
+        - [ ] Given/When/Then scenario 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-notes
+    attributes:
+      label: Technical Notes
+      description: Implementation approach, affected files, considerations
+      placeholder: Technical implementation details...
+    validations:
+      required: false
+
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: Test Plan
+      description: What tests need to be written?
+      placeholder: |
+        - [ ] Unit tests for...
+        - [ ] Integration tests for...
+    validations:
+      required: false
+
+  - type: input
+    id: parent-feature
+    attributes:
+      label: Parent Feature
+      description: Link to parent feature issue
+      placeholder: "Relates to #XX"
+    validations:
+      required: false

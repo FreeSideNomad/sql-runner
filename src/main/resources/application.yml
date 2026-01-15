@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: sql-runner
+
+  # Disable JPA auto-config until DB is configured
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+  # Thymeleaf configuration
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+  # Security - disable for initial development
+  security:
+    user:
+      name: admin
+      password: admin
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 20m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
