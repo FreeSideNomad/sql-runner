@@ -1,0 +1,27 @@
+# Development profile - SQL Server via Docker
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=sqlrunner;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: ${SQLSERVER_PASSWORD:SqlRunner2024!}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  flyway:
+    locations: classpath:db/migration
+
+  h2:
+    console:
+      enabled: false
+
+  thymeleaf:
+    cache: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
