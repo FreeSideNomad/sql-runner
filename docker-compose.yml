@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Local development databases
 # Start with: docker-compose up -d
 # Stop with: docker-compose down
