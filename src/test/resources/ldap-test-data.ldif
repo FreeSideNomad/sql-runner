@@ -1,0 +1,47 @@
+dn: dc=test,dc=com
+objectClass: domain
+dc: test
+
+dn: ou=Users,dc=test,dc=com
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Groups,dc=test,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: uid=admin,ou=Users,dc=test,dc=com
+objectClass: inetOrgPerson
+uid: admin
+cn: Admin User
+sn: User
+userPassword: admin123
+
+dn: uid=updater,ou=Users,dc=test,dc=com
+objectClass: inetOrgPerson
+uid: updater
+cn: Updater User
+sn: User
+userPassword: updater123
+
+dn: uid=reader,ou=Users,dc=test,dc=com
+objectClass: inetOrgPerson
+uid: reader
+cn: Reader User
+sn: User
+userPassword: reader123
+
+dn: cn=SQLRunner-Admins,ou=Groups,dc=test,dc=com
+objectClass: groupOfNames
+cn: SQLRunner-Admins
+member: uid=admin,ou=Users,dc=test,dc=com
+
+dn: cn=SQLRunner-UpdateRunners,ou=Groups,dc=test,dc=com
+objectClass: groupOfNames
+cn: SQLRunner-UpdateRunners
+member: uid=updater,ou=Users,dc=test,dc=com
+
+dn: cn=SQLRunner-SelectRunners,ou=Groups,dc=test,dc=com
+objectClass: groupOfNames
+cn: SQLRunner-SelectRunners
+member: uid=reader,ou=Users,dc=test,dc=com

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Runner - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .rbc-blue { background-color: #003168; }
+        .rbc-yellow { background-color: #FFD200; }
+        .rbc-blue-text { color: #003168; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="rbc-blue text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">SQL Runner</h1>
+                    <span class="text-gray-300">|</span>
+                    <a href="/dashboard" class="hover:text-yellow-300">Dashboard</a>
+                    <a href="/queries" class="hover:text-yellow-300">Queries</a>
+                    <a href="/history" class="hover:text-yellow-300">History</a>
+                    <a href="/admin" class="text-yellow-300 font-semibold">Admin</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">
+                        Welcome, <span sec:authentication="name">User</span>
+                    </span>
+                    <form th:action="@{/logout}" method="post" class="inline">
+                        <button type="submit" class="rbc-yellow text-gray-900 px-4 py-1 rounded hover:bg-yellow-400 transition">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold rbc-blue-text mb-4">Administration</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                <!-- Query Management -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Query Management</h3>
+                    <p class="text-gray-600 mb-4">Create, edit, and manage query templates.</p>
+                    <a href="/admin/queries" class="text-blue-600 hover:underline">Manage Queries &rarr;</a>
+                </div>
+
+                <!-- Connection Management -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Connections</h3>
+                    <p class="text-gray-600 mb-4">Configure database connections.</p>
+                    <a href="/admin/connections" class="text-blue-600 hover:underline">Manage Connections &rarr;</a>
+                </div>
+
+                <!-- Import/Export -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-semibold rbc-blue-text mb-2">Import/Export</h3>
+                    <p class="text-gray-600 mb-4">Import or export query configurations.</p>
+                    <a href="/admin/import-export" class="text-blue-600 hover:underline">Import/Export &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
