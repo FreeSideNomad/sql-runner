@@ -28,62 +28,139 @@
         <span th:text="${error}">Error</span>
     </div>
 
-    <!-- Queries Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <!-- Empty State -->
-        <div th:if="${queries == null or queries.empty}" class="p-8 text-center">
-            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-            </svg>
-            <p class="text-lg text-gray-600">No queries available</p>
-            <p class="text-sm text-gray-500 mt-2">Contact an administrator to create query templates.</p>
-        </div>
-
-        <!-- Table -->
-        <table th:unless="${queries == null or queries.empty}" class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                <tr th:each="query : ${queries}" class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
-                        <div class="text-sm font-medium text-gray-900" th:text="${query.name}">Query Name</div>
-                        <div th:if="${query.description}" class="text-sm text-gray-500 truncate max-w-xs" th:text="${query.description}">Description</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800" th:text="${query.category}">Category</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span th:if="${query.queryType.name() == 'SELECT'}"
-                              class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">SELECT</span>
-                        <span th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
-                              class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">UPDATE</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${query.connectionName}">Connection</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex justify-end space-x-3">
-                            <a th:if="${query.queryType.name() == 'SELECT'}"
-                               th:href="@{/queries/{id}/execute(id=${query.id})}"
-                               class="text-green-600 hover:text-green-800 font-medium">Execute</a>
-                            <a th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
-                               th:href="@{/queries/{id}/update(id=${query.id})}"
-                               class="text-orange-600 hover:text-orange-800 font-medium">Run Update</a>
-                            <a th:href="@{/queries/{id}(id=${query.id})}"
-                               class="text-rbc-blue hover:text-rbc-light-blue">View</a>
-                            <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')" th:unless="${readOnlyMode}"
-                               class="text-gray-500 hover:text-gray-700">Edit</a>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Empty State -->
+    <div th:if="${groupedQueries == null or groupedQueries.empty}" class="bg-white rounded-lg shadow-md p-8 text-center">
+        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+        </svg>
+        <p class="text-lg text-gray-600">No queries available</p>
+        <p class="text-sm text-gray-500 mt-2">Contact an administrator to create query templates.</p>
     </div>
+
+    <!-- Grouped Queries -->
+    <div th:unless="${groupedQueries == null or groupedQueries.empty}" class="space-y-4">
+        <!-- Connection Groups -->
+        <div th:each="connectionEntry, connStat : ${groupedQueries}" class="bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Connection Header (Collapsible) -->
+            <button type="button"
+                    class="connection-toggle w-full px-6 py-4 flex items-center justify-between bg-rbc-blue text-white hover:bg-blue-800 transition cursor-pointer"
+                    th:data-connection="${connStat.index}"
+                    onclick="toggleConnection(this)">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                    </svg>
+                    <span class="text-lg font-semibold" th:text="${connectionEntry.key}">Connection Name</span>
+                    <span class="text-sm opacity-75"
+                          th:text="'(' + ${connectionEntry.value.size()} + ' categories)'">
+                        (N categories)
+                    </span>
+                </div>
+                <svg class="connection-chevron w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <!-- Connection Content (Categories) -->
+            <div class="connection-content" th:data-connection="${connStat.index}">
+                <!-- Category Groups -->
+                <div th:each="categoryEntry, catStat : ${connectionEntry.value}" class="border-b border-gray-200 last:border-b-0">
+                    <!-- Category Header (Collapsible) -->
+                    <button type="button"
+                            class="category-toggle w-full px-6 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+                            th:data-connection="${connStat.index}"
+                            th:data-category="${catStat.index}"
+                            onclick="toggleCategory(this)">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                            <span class="font-medium text-gray-700" th:text="${categoryEntry.key}">Category Name</span>
+                            <span class="text-sm text-gray-500" th:text="'(' + ${categoryEntry.value.size()} + ')'">
+                                (N)
+                            </span>
+                        </div>
+                        <svg class="category-chevron w-4 h-4 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <!-- Category Content (Queries) -->
+                    <div class="category-content" th:data-connection="${connStat.index}" th:data-category="${catStat.index}">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr th:each="query : ${categoryEntry.value}" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-gray-900" th:text="${query.name}">Query Name</div>
+                                        <div th:if="${query.description}" class="text-sm text-gray-500 truncate max-w-md" th:text="${query.description}">Description</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span th:if="${query.queryType.name() == 'SELECT'}"
+                                              class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">SELECT</span>
+                                        <span th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+                                              class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">UPDATE</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-3">
+                                            <a th:if="${query.queryType.name() == 'SELECT'}"
+                                               th:href="@{/queries/{id}/execute(id=${query.id})}"
+                                               class="text-green-600 hover:text-green-800 font-medium">Execute</a>
+                                            <a th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+                                               th:href="@{/queries/{id}/update(id=${query.id})}"
+                                               class="text-orange-600 hover:text-orange-800 font-medium">Run Update</a>
+                                            <a th:href="@{/queries/{id}(id=${query.id})}"
+                                               class="text-rbc-blue hover:text-rbc-light-blue">View</a>
+                                            <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')" th:unless="${readOnlyMode}"
+                                               class="text-gray-500 hover:text-gray-700">Edit</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Collapsible Sections -->
+    <script th:inline="javascript">
+        function toggleConnection(button) {
+            const connectionIndex = button.dataset.connection;
+            const content = document.querySelector(`.connection-content[data-connection="${connectionIndex}"]`);
+            const chevron = button.querySelector('.connection-chevron');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                chevron.classList.remove('-rotate-90');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.add('-rotate-90');
+            }
+        }
+
+        function toggleCategory(button) {
+            const connectionIndex = button.dataset.connection;
+            const categoryIndex = button.dataset.category;
+            const content = document.querySelector(`.category-content[data-connection="${connectionIndex}"][data-category="${categoryIndex}"]`);
+            const chevron = button.querySelector('.category-chevron');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                chevron.classList.remove('-rotate-90');
+            } else {
+                content.style.display = 'none';
+                chevron.classList.add('-rotate-90');
+            }
+        }
+
+        // Expand all sections by default on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // All sections start expanded (no action needed since display is default)
+        });
+    </script>
 </div>
 </html>

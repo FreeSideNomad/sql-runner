@@ -9,8 +9,10 @@ import com.ivamare.repository.QueryRepository;
 import com.ivamare.repository.QueryVersionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,40 @@ public class QueryService {
   @Transactional(readOnly = true)
   public List<QueryDto> getAllQueriesSortedByName() {
     return queryRepository.findByIsActiveTrueOrderByNameAsc().stream().map(QueryDto::from).toList();
+  }
+
+  /**
+   * Get all active queries grouped by connection name, then by category, with queries sorted by
+   * name within each category.
+   *
+   * @return Nested map: Connection -> Category -> List of queries (sorted by name)
+   */
+  @Transactional(readOnly = true)
+  public Map<String, Map<String, List<QueryDto>>> getQueriesGroupedByConnectionAndCategory() {
+    List<QueryDto> allQueries =
+        queryRepository.findByIsActiveTrueOrderByNameAsc().stream().map(QueryDto::from).toList();
+
+    // Group by connection, then by category, maintaining sort order
+    Map<String, Map<String, List<QueryDto>>> result = new TreeMap<>();
+
+    for (QueryDto query : allQueries) {
+      String connection = query.getConnectionName() != null ? query.getConnectionName() : "Unknown";
+      String category = query.getCategory() != null ? query.getCategory() : "Uncategorized";
+
+      result
+          .computeIfAbsent(connection, k -> new TreeMap<>())
+          .computeIfAbsent(category, k -> new java.util.ArrayList<>())
+          .add(query);
+    }
+
+    // Sort queries within each category by name (already sorted from DB, but ensure consistency)
+    for (Map<String, List<QueryDto>> categoryMap : result.values()) {
+      for (List<QueryDto> queries : categoryMap.values()) {
+        queries.sort(Comparator.comparing(QueryDto::getName, String.CASE_INSENSITIVE_ORDER));
+      }
+    }
+
+    return result;
   }
 
   /**

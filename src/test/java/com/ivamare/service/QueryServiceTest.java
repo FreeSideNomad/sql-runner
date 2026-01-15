@@ -57,6 +57,56 @@ class QueryServiceTest {
   }
 
   @Test
+  void getQueriesGroupedByConnectionAndCategory_returnsNestedGroupedQueries() {
+    Query q1 = createQueryWithConnection("1", "Alpha Query", "Category A", "conn-1");
+    Query q2 = createQueryWithConnection("2", "Beta Query", "Category A", "conn-1");
+    Query q3 = createQueryWithConnection("3", "Gamma Query", "Category B", "conn-1");
+    Query q4 = createQueryWithConnection("4", "Delta Query", "Category A", "conn-2");
+
+    when(queryRepository.findByIsActiveTrueOrderByNameAsc()).thenReturn(List.of(q1, q2, q3, q4));
+
+    Map<String, Map<String, List<QueryDto>>> result =
+        queryService.getQueriesGroupedByConnectionAndCategory();
+
+    assertThat(result).hasSize(2); // conn-1 and conn-2
+    assertThat(result.get("conn-1")).hasSize(2); // Category A and Category B
+    assertThat(result.get("conn-1").get("Category A")).hasSize(2);
+    assertThat(result.get("conn-1").get("Category B")).hasSize(1);
+    assertThat(result.get("conn-2")).hasSize(1); // Category A only
+    assertThat(result.get("conn-2").get("Category A")).hasSize(1);
+
+    // Verify sorting by name within category
+    List<QueryDto> catAQueries = result.get("conn-1").get("Category A");
+    assertThat(catAQueries.get(0).getName()).isEqualTo("Alpha Query");
+    assertThat(catAQueries.get(1).getName()).isEqualTo("Beta Query");
+  }
+
+  @Test
+  void getQueriesGroupedByConnectionAndCategory_handlesNullConnectionAndCategory() {
+    Query q1 =
+        Query.builder()
+            .id("1")
+            .name("Orphan Query")
+            .connectionName(null)
+            .category(null)
+            .queryType(QueryType.SELECT)
+            .currentVersion(1)
+            .isActive(true)
+            .createdAt(LocalDateTime.now())
+            .createdBy("admin")
+            .build();
+
+    when(queryRepository.findByIsActiveTrueOrderByNameAsc()).thenReturn(List.of(q1));
+
+    Map<String, Map<String, List<QueryDto>>> result =
+        queryService.getQueriesGroupedByConnectionAndCategory();
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get("Unknown")).hasSize(1);
+    assertThat(result.get("Unknown").get("Uncategorized")).hasSize(1);
+  }
+
+  @Test
   void getQuery_existingId_returnsQuery() {
     Query query = createQuery("test-id", "Test Query", "Test");
     when(queryRepository.findById("test-id")).thenReturn(Optional.of(query));
@@ -225,12 +275,17 @@ class QueryServiceTest {
   }
 
   private Query createQuery(String id, String name, String category) {
+    return createQueryWithConnection(id, name, category, "test-conn");
+  }
+
+  private Query createQueryWithConnection(
+      String id, String name, String category, String connectionName) {
     return Query.builder()
         .id(id)
         .name(name)
         .description("Test description")
         .category(category)
-        .connectionName("test-conn")
+        .connectionName(connectionName)
         .queryType(QueryType.SELECT)
         .currentVersion(1)
         .isActive(true)
