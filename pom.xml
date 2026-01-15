@@ -141,6 +141,26 @@
 					</java>
 				</configuration>
 			</plugin>
+
+			<!-- Git hooks plugin -->
+			<plugin>
+				<groupId>com.rudikershaw.gitbuildhook</groupId>
+				<artifactId>git-build-hook-maven-plugin</artifactId>
+				<version>3.5.0</version>
+				<configuration>
+					<installHooks>
+						<pre-commit>scripts/pre-commit.sh</pre-commit>
+						<pre-push>scripts/pre-push.sh</pre-push>
+					</installHooks>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>install</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
