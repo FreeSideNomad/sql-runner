@@ -6,12 +6,10 @@ import com.ivamare.dto.QueryConfig;
 import com.ivamare.service.QueryExecutionService;
 import com.ivamare.service.QueryService;
 import com.ivamare.service.UpdateWorkflowService;
+import com.ivamare.util.CsvUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,26 +111,10 @@ public class UpdateWorkflowController {
     response.setContentType("text/csv; charset=UTF-8");
     response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-    response.getOutputStream().write(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+    List<String> columns =
+        result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
 
-    try (PrintWriter writer =
-        new PrintWriter(
-            new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8))) {
-
-      List<String> columns =
-          result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
-
-      writer.println(
-          columns.stream().map(this::escapeCsv).collect(java.util.stream.Collectors.joining(",")));
-
-      for (Map<String, Object> row : result.getRows()) {
-        String line =
-            columns.stream()
-                .map(col -> escapeCsv(row.get(col) != null ? row.get(col).toString() : ""))
-                .collect(java.util.stream.Collectors.joining(","));
-        writer.println(line);
-      }
-    }
+    CsvUtils.writeCsv(response.getOutputStream(), result.getRows(), columns, columns);
   }
 
   /** Step 3: Execute the UPDATE with backup. */
@@ -188,6 +170,68 @@ public class UpdateWorkflowController {
     return "queries/update-workflow";
   }
 
+  /** Download SQL script for the update operation. */
+  @GetMapping("/{id}/update/download-script")
+  @SuppressWarnings("unchecked")
+  public void downloadUpdateScript(
+      @PathVariable String id, HttpSession session, HttpServletResponse response)
+      throws IOException {
+
+    List<Map<String, Object>> previewData =
+        (List<Map<String, Object>>) session.getAttribute(SESSION_PREVIEW_DATA);
+    Map<String, String> params = (Map<String, String>) session.getAttribute(SESSION_PREVIEW_PARAMS);
+
+    if (previewData == null || params == null) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Preview data expired");
+      return;
+    }
+
+    var queryDto = queryService.getQueryDto(id);
+    String script = updateWorkflowService.generateUpdateScript(id, params, previewData);
+
+    String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_update.sql";
+    downloadText(response, script, filename);
+  }
+
+  /** Download SQL script for the rollback operation. */
+  @GetMapping("/{id}/update/rollback/{executionLogId}/download-script")
+  public void downloadRollbackScript(
+      @PathVariable String id,
+      @PathVariable String executionLogId,
+      HttpServletResponse response,
+      RedirectAttributes redirectAttributes)
+      throws IOException {
+
+    var queryDto = queryService.getQueryDto(id);
+
+    try {
+      String script = updateWorkflowService.generateRollbackScript(executionLogId);
+      String filename = queryDto.getName().replaceAll("[^a-zA-Z0-9]", "_") + "_rollback.sql";
+      downloadText(response, script, filename);
+    } catch (IllegalStateException e) {
+      // Missing rollback configuration - return error as plain text
+      response.setContentType("text/plain; charset=UTF-8");
+      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      response
+          .getWriter()
+          .write(
+              "Cannot generate rollback script: "
+                  + e.getMessage()
+                  + "\n\nPlease ensure the query configuration includes:\n"
+                  + "- primaryKeyColumn: the column used to identify rows\n"
+                  + "- rollbackColumns: the columns to restore during rollback");
+      response.getWriter().flush();
+    }
+  }
+
+  private void downloadText(HttpServletResponse response, String text, String filename)
+      throws IOException {
+    response.setContentType("text/plain; charset=UTF-8");
+    response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    response.getWriter().write(text);
+    response.getWriter().flush();
+  }
+
   /** Execute rollback for a previous update. */
   @PostMapping("/update/rollback/{executionLogId}")
   public String executeRollback(
@@ -214,15 +258,5 @@ public class UpdateWorkflowController {
     }
 
     return "redirect:/history";
-  }
-
-  private String escapeCsv(String value) {
-    if (value == null) {
-      return "";
-    }
-    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-      return "\"" + value.replace("\"", "\"\"") + "\"";
-    }
-    return value;
   }
 }

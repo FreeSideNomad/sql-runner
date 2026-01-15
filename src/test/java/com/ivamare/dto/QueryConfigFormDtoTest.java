@@ -336,4 +336,99 @@ class QueryConfigFormDtoTest {
     assertThat(result.getParameters().get(0).getName()).isEqualTo("region");
     assertThat(result.getParameters().get(0).isRequired()).isTrue();
   }
+
+  @Test
+  void toQueryConfig_withUpdateBindingModeBatch_parsesMode() {
+    QueryConfigFormDto form =
+        QueryConfigFormDto.builder()
+            .selectSql("SELECT id FROM test")
+            .updateSql("UPDATE test SET x = 1 WHERE id IN (:id_list)")
+            .updateBindingMode("BATCH")
+            .build();
+
+    QueryConfig result = form.toQueryConfig();
+
+    assertThat(result.getUpdateBindingMode()).isEqualTo(com.ivamare.domain.UpdateBindingMode.BATCH);
+  }
+
+  @Test
+  void toQueryConfig_withUpdateBindingModeRowByRow_parsesMode() {
+    QueryConfigFormDto form =
+        QueryConfigFormDto.builder()
+            .selectSql("SELECT id, name FROM test")
+            .updateSql("UPDATE test SET name = :name WHERE id = :id")
+            .updateBindingMode("ROW_BY_ROW")
+            .build();
+
+    QueryConfig result = form.toQueryConfig();
+
+    assertThat(result.getUpdateBindingMode())
+        .isEqualTo(com.ivamare.domain.UpdateBindingMode.ROW_BY_ROW);
+  }
+
+  @Test
+  void toQueryConfig_withInvalidUpdateBindingMode_returnsNull() {
+    QueryConfigFormDto form =
+        QueryConfigFormDto.builder()
+            .selectSql("SELECT * FROM test")
+            .updateSql("UPDATE test SET x = 1")
+            .updateBindingMode("INVALID_MODE")
+            .build();
+
+    QueryConfig result = form.toQueryConfig();
+
+    assertThat(result.getUpdateBindingMode()).isNull();
+  }
+
+  @Test
+  void toQueryConfig_withNullUpdateBindingMode_returnsNull() {
+    QueryConfigFormDto form =
+        QueryConfigFormDto.builder()
+            .selectSql("SELECT * FROM test")
+            .updateSql("UPDATE test SET x = 1")
+            .updateBindingMode(null)
+            .build();
+
+    QueryConfig result = form.toQueryConfig();
+
+    assertThat(result.getUpdateBindingMode()).isNull();
+  }
+
+  @Test
+  void toQueryConfig_withBlankUpdateBindingMode_returnsNull() {
+    QueryConfigFormDto form =
+        QueryConfigFormDto.builder()
+            .selectSql("SELECT * FROM test")
+            .updateSql("UPDATE test SET x = 1")
+            .updateBindingMode("   ")
+            .build();
+
+    QueryConfig result = form.toQueryConfig();
+
+    assertThat(result.getUpdateBindingMode()).isNull();
+  }
+
+  @Test
+  void from_withUpdateBindingMode_preservesMode() {
+    QueryConfig original =
+        QueryConfig.builder()
+            .selectSql("SELECT id FROM test")
+            .updateSql("UPDATE test SET x = 1")
+            .updateBindingMode(com.ivamare.domain.UpdateBindingMode.BATCH)
+            .build();
+
+    QueryConfigFormDto form = QueryConfigFormDto.from(original);
+
+    assertThat(form.getUpdateBindingMode()).isEqualTo("BATCH");
+  }
+
+  @Test
+  void from_withNullUpdateBindingMode_preservesNull() {
+    QueryConfig original =
+        QueryConfig.builder().selectSql("SELECT id FROM test").updateBindingMode(null).build();
+
+    QueryConfigFormDto form = QueryConfigFormDto.from(original);
+
+    assertThat(form.getUpdateBindingMode()).isNull();
+  }
 }

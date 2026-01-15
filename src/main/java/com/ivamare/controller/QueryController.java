@@ -7,12 +7,10 @@ import com.ivamare.dto.QueryFormDto;
 import com.ivamare.service.ConnectionRegistry;
 import com.ivamare.service.QueryExecutionService;
 import com.ivamare.service.QueryService;
+import com.ivamare.util.CsvUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +33,7 @@ public class QueryController {
   private final QueryService queryService;
   private final ConnectionRegistry connectionRegistry;
   private final QueryExecutionService executionService;
+  private final com.ivamare.service.QueryConfigValidator configValidator;
 
   @Value("${sqlrunner.read-only-mode:false}")
   private boolean readOnlyMode;
@@ -68,6 +67,8 @@ public class QueryController {
     model.addAttribute("connections", connectionRegistry.listConnections());
     model.addAttribute("categories", queryService.getAllCategories());
     model.addAttribute("parameterTypes", ParameterType.values());
+    model.addAttribute(
+        "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
     model.addAttribute("isEdit", false);
     model.addAttribute("pageTitle", "New Query");
     return "queries/form";
@@ -87,6 +88,8 @@ public class QueryController {
     model.addAttribute("connections", connectionRegistry.listConnections());
     model.addAttribute("categories", queryService.getAllCategories());
     model.addAttribute("parameterTypes", ParameterType.values());
+    model.addAttribute(
+        "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
     model.addAttribute("isEdit", true);
     model.addAttribute("pageTitle", "Edit Query");
     return "queries/form";
@@ -106,11 +109,27 @@ public class QueryController {
       return "redirect:/queries";
     }
 
+    // Custom validation for UPDATE_WORKFLOW
+    if (form.getQueryType() == com.ivamare.domain.QueryType.UPDATE_WORKFLOW) {
+      com.ivamare.service.QueryConfigValidator.ValidationResult validationResult =
+          configValidator.validateUpdateConfig(form.getConfig(), form.getQueryType());
+      if (validationResult.hasErrors()) {
+        for (String error : validationResult.getErrors()) {
+          result.reject("config", error);
+        }
+      }
+      if (validationResult.hasWarnings()) {
+        model.addAttribute("warnings", validationResult.getWarnings());
+      }
+    }
+
     if (result.hasErrors()) {
       form.ensureConfigInitialized();
       model.addAttribute("connections", connectionRegistry.listConnections());
       model.addAttribute("categories", queryService.getAllCategories());
       model.addAttribute("parameterTypes", ParameterType.values());
+      model.addAttribute(
+          "availableParameters", configValidator.getAvailableParameters(form.getConfig()));
       model.addAttribute("isEdit", form.isEdit());
       model.addAttribute("pageTitle", form.isEdit() ? "Edit Query" : "New Query");
       return "queries/form";
@@ -232,39 +251,10 @@ public class QueryController {
     response.setContentType("text/csv; charset=UTF-8");
     response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-    // Write UTF-8 BOM for Excel compatibility
-    response.getOutputStream().write(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+    // Filter out any empty column names
+    List<String> columns =
+        result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
 
-    try (PrintWriter writer =
-        new PrintWriter(
-            new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8))) {
-
-      // Filter out any empty column names
-      List<String> columns =
-          result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
-
-      // Write header
-      writer.println(
-          columns.stream().map(this::escapeCsv).collect(java.util.stream.Collectors.joining(",")));
-
-      // Write data rows
-      for (Map<String, Object> row : result.getRows()) {
-        String line =
-            columns.stream()
-                .map(col -> escapeCsv(row.get(col) != null ? row.get(col).toString() : ""))
-                .collect(java.util.stream.Collectors.joining(","));
-        writer.println(line);
-      }
-    }
-  }
-
-  private String escapeCsv(String value) {
-    if (value == null) {
-      return "";
-    }
-    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-      return "\"" + value.replace("\"", "\"\"") + "\"";
-    }
-    return value;
+    CsvUtils.writeCsv(response.getOutputStream(), result.getRows(), columns, columns);
   }
 }

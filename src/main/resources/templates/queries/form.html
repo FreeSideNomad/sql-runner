@@ -2,22 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::content})}">
-<!-- CodeMirror CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-<style>
-    .CodeMirror {
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        font-size: 14px;
-        height: auto;
-    }
-    .CodeMirror-focused {
-        border-color: #003168;
-        box-shadow: 0 0 0 1px #003168;
-    }
-</style>
 <div th:fragment="content">
+    <!-- CodeMirror CSS (must be inside content fragment) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <style>
+        .CodeMirror {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 14px;
+            height: auto;
+        }
+        .CodeMirror-focused {
+            border-color: #003168;
+            box-shadow: 0 0 0 1px #003168;
+        }
+    </style>
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
         <div>
@@ -38,6 +38,14 @@
             <p class="font-semibold">Please correct the following errors:</p>
             <ul class="list-disc list-inside mt-2">
                 <li th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</li>
+            </ul>
+        </div>
+
+        <!-- Validation Warnings -->
+        <div th:if="${warnings}" class="bg-yellow-50 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+            <p class="font-semibold">Configuration Warnings:</p>
+            <ul class="list-disc list-inside mt-2">
+                <li th:each="warning : ${warnings}" th:text="${warning}">Warning</li>
             </ul>
         </div>
 
@@ -116,6 +124,16 @@
             <!-- For UPDATE_WORKFLOW queries -->
             <div id="updateSqlSection" class="hidden space-y-4">
                 <div>
+                    <label for="config.updateBindingMode" class="block text-sm font-medium text-gray-700 mb-1">Update Binding Mode *</label>
+                    <select id="config.updateBindingMode" th:field="*{config.updateBindingMode}" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                        <option value="">-- Select Binding Mode --</option>
+                        <option value="STANDARD">Standard - Use only user-input parameters</option>
+                        <option value="BATCH">Batch - Single UPDATE using :id_list from preview</option>
+                        <option value="ROW_BY_ROW">Row-by-Row - One UPDATE per preview row</option>
+                    </select>
+                </div>
+                <div>
                     <label for="config.selectSql" class="block text-sm font-medium text-gray-700 mb-1">Select SQL (for preview) *</label>
                     <textarea id="config.selectSql" th:field="*{config.selectSql}" rows="5"
                               class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
@@ -148,6 +166,19 @@
                                placeholder="status">
                         <p class="text-gray-500 text-xs mt-1">Comma-separated</p>
                     </div>
+                </div>
+
+                <!-- Available Parameters Help -->
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-2">Available Parameters</h3>
+                    <div class="space-y-1 text-xs text-blue-700">
+                        <p><strong>User Parameters:</strong> <code class="text-blue-700" th:text="${availableParameters.userParametersDisplay}">:param1</code></p>
+                        <p><strong>Column Parameters:</strong> <code class="text-blue-700" th:text="${availableParameters.columnParametersDisplay}">:col1</code></p>
+                        <p><strong>Special Parameters:</strong> <code class="text-blue-700">:id_list</code> (Batch mode only)</p>
+                    </div>
+                    <p class="mt-2 text-[10px] text-blue-600 italic">
+                        Parameters update when saving. Column parameters are detected from the Select SQL clause.
+                    </p>
                 </div>
             </div>
 
@@ -348,9 +379,25 @@
             if (queryType === 'UPDATE_WORKFLOW') {
                 selectSection.classList.add('hidden');
                 updateSection.classList.remove('hidden');
+                // Refresh CodeMirror editors when section becomes visible
+                setTimeout(function() {
+                    document.querySelectorAll('#updateSqlSection .CodeMirror').forEach(function(cm) {
+                        if (cm.CodeMirror) {
+                            cm.CodeMirror.refresh();
+                        }
+                    });
+                }, 10);
             } else {
                 selectSection.classList.remove('hidden');
                 updateSection.classList.add('hidden');
+                // Refresh CodeMirror editor when section becomes visible
+                setTimeout(function() {
+                    document.querySelectorAll('#selectSqlSection .CodeMirror').forEach(function(cm) {
+                        if (cm.CodeMirror) {
+                            cm.CodeMirror.refresh();
+                        }
+                    });
+                }, 10);
             }
         }
 

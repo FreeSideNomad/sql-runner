@@ -219,4 +219,244 @@ class UpdateWorkflowServiceIntegrationTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("already been rolled back");
   }
+
+  @Test
+  void executeBatchUpdate_usesIdListParameter() {
+    // Create batch mode query
+    String batchConfigYaml =
+        """
+        selectSql: SELECT id, name, status FROM sqlrunner.test_update_table WHERE status = :status
+        updateSql: UPDATE sqlrunner.test_update_table SET name = 'BatchUpdated' WHERE id IN (:id_list)
+        updateBindingMode: BATCH
+        primaryKeyColumn: id
+        backupColumns:
+          - name
+          - status
+        rollbackColumns:
+          - name
+        parameters:
+          - name: status
+            dataType: STRING
+            required: true
+        """;
+
+    Query batchQuery =
+        Query.builder()
+            .id(UUID.randomUUID().toString())
+            .name("Batch Update Query")
+            .category("Test")
+            .queryType(QueryType.UPDATE_WORKFLOW)
+            .connectionName("test-conn")
+            .currentVersion(1)
+            .isActive(true)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    batchQuery = queryRepository.save(batchQuery);
+
+    QueryVersion version =
+        QueryVersion.builder()
+            .id(UUID.randomUUID().toString())
+            .query(batchQuery)
+            .version(1)
+            .configYaml(batchConfigYaml)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    versionRepository.save(version);
+
+    // Execute with preview data containing IDs
+    Map<String, String> params = Map.of("status", "ACTIVE");
+    List<Map<String, Object>> previewData =
+        List.of(
+            Map.of("id", 1, "name", "Original", "status", "ACTIVE"),
+            Map.of("id", 2, "name", "Second", "status", "ACTIVE"));
+
+    ExecutionResult result =
+        updateWorkflowService.executeUpdate(batchQuery.getId(), params, previewData, "user");
+
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getRowCount()).isEqualTo(2);
+
+    // Verify data was updated
+    List<Map<String, Object>> updated =
+        jdbcTemplate.queryForList(
+            "SELECT name FROM sqlrunner.test_update_table WHERE id IN (1, 2)");
+    assertThat(updated).allSatisfy(row -> assertThat(row.get("NAME")).isEqualTo("BatchUpdated"));
+  }
+
+  @Test
+  void executeBatchUpdate_withEmptyIdList_returnsSuccessWithZeroRows() {
+    // Create batch mode query
+    String batchConfigYaml =
+        """
+        selectSql: SELECT id, name, status FROM sqlrunner.test_update_table WHERE status = :status
+        updateSql: UPDATE sqlrunner.test_update_table SET name = 'BatchUpdated' WHERE id IN (:id_list)
+        updateBindingMode: BATCH
+        primaryKeyColumn: id
+        backupColumns:
+          - name
+        rollbackColumns:
+          - name
+        parameters:
+          - name: status
+            dataType: STRING
+        """;
+
+    Query batchQuery =
+        Query.builder()
+            .id(UUID.randomUUID().toString())
+            .name("Batch Empty Query")
+            .category("Test")
+            .queryType(QueryType.UPDATE_WORKFLOW)
+            .connectionName("test-conn")
+            .currentVersion(1)
+            .isActive(true)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    batchQuery = queryRepository.save(batchQuery);
+
+    QueryVersion version =
+        QueryVersion.builder()
+            .id(UUID.randomUUID().toString())
+            .query(batchQuery)
+            .version(1)
+            .configYaml(batchConfigYaml)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    versionRepository.save(version);
+
+    // Execute with empty preview data
+    ExecutionResult result =
+        updateWorkflowService.executeUpdate(batchQuery.getId(), Map.of(), List.of(), "user");
+
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getRowCount()).isEqualTo(0);
+    assertThat(result.getMessage()).isEqualTo("No rows to update");
+  }
+
+  @Test
+  void executeRowByRowUpdate_updatesEachRowWithColumnValues() {
+    // Create row-by-row mode query
+    String rowByRowConfigYaml =
+        """
+        selectSql: SELECT id, name, status FROM sqlrunner.test_update_table WHERE status = :status
+        updateSql: UPDATE sqlrunner.test_update_table SET name = UPPER(:name) WHERE id = :id
+        updateBindingMode: ROW_BY_ROW
+        primaryKeyColumn: id
+        backupColumns:
+          - name
+          - status
+        rollbackColumns:
+          - name
+        parameters:
+          - name: status
+            dataType: STRING
+            required: true
+        """;
+
+    Query rowByRowQuery =
+        Query.builder()
+            .id(UUID.randomUUID().toString())
+            .name("Row By Row Query")
+            .category("Test")
+            .queryType(QueryType.UPDATE_WORKFLOW)
+            .connectionName("test-conn")
+            .currentVersion(1)
+            .isActive(true)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    rowByRowQuery = queryRepository.save(rowByRowQuery);
+
+    QueryVersion version =
+        QueryVersion.builder()
+            .id(UUID.randomUUID().toString())
+            .query(rowByRowQuery)
+            .version(1)
+            .configYaml(rowByRowConfigYaml)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    versionRepository.save(version);
+
+    // Execute with preview data containing column values
+    Map<String, String> params = Map.of("status", "ACTIVE");
+    List<Map<String, Object>> previewData =
+        List.of(
+            Map.of("id", 1, "name", "original", "status", "ACTIVE"),
+            Map.of("id", 2, "name", "second", "status", "ACTIVE"));
+
+    ExecutionResult result =
+        updateWorkflowService.executeUpdate(rowByRowQuery.getId(), params, previewData, "user");
+
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getRowCount()).isEqualTo(2);
+
+    // Verify data was updated with UPPER transformation
+    String name1 =
+        jdbcTemplate.queryForObject(
+            "SELECT name FROM sqlrunner.test_update_table WHERE id = 1", String.class);
+    String name2 =
+        jdbcTemplate.queryForObject(
+            "SELECT name FROM sqlrunner.test_update_table WHERE id = 2", String.class);
+
+    assertThat(name1).isEqualTo("ORIGINAL");
+    assertThat(name2).isEqualTo("SECOND");
+  }
+
+  @Test
+  void executeBatchUpdate_withMissingPrimaryKeyColumn_returnsFailure() {
+    // Create batch mode query without primaryKeyColumn
+    String batchConfigYaml =
+        """
+        selectSql: SELECT id, name FROM sqlrunner.test_update_table
+        updateSql: UPDATE sqlrunner.test_update_table SET name = 'Test' WHERE id IN (:id_list)
+        updateBindingMode: BATCH
+        """;
+
+    Query batchQuery =
+        Query.builder()
+            .id(UUID.randomUUID().toString())
+            .name("Batch No PK Query")
+            .category("Test")
+            .queryType(QueryType.UPDATE_WORKFLOW)
+            .connectionName("test-conn")
+            .currentVersion(1)
+            .isActive(true)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    batchQuery = queryRepository.save(batchQuery);
+
+    QueryVersion version =
+        QueryVersion.builder()
+            .id(UUID.randomUUID().toString())
+            .query(batchQuery)
+            .version(1)
+            .configYaml(batchConfigYaml)
+            .createdAt(LocalDateTime.now())
+            .createdBy("test")
+            .build();
+
+    versionRepository.save(version);
+
+    List<Map<String, Object>> previewData = List.of(Map.of("id", 1, "name", "Test"));
+
+    ExecutionResult result =
+        updateWorkflowService.executeUpdate(batchQuery.getId(), Map.of(), previewData, "user");
+
+    assertThat(result.isSuccess()).isFalse();
+    assertThat(result.getErrorMessage()).isNotNull();
+    assertThat(result.getErrorMessage()).contains("primaryKeyColumn");
+  }
 }

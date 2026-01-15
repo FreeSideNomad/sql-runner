@@ -1,16 +1,19 @@
 package com.ivamare.controller;
 
+import com.ivamare.domain.BackupRecord;
 import com.ivamare.domain.ExecutionLog;
 import com.ivamare.domain.ExecutionStatus;
+import com.ivamare.domain.ExecutionType;
 import com.ivamare.repository.ExecutionLogRepository;
+import com.ivamare.service.UpdateWorkflowService;
+import com.ivamare.util.CsvUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -30,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class HistoryController {
 
   private final ExecutionLogRepository logRepository;
+  private final UpdateWorkflowService updateWorkflowService;
 
   @GetMapping
   public String listHistory(
@@ -102,46 +106,40 @@ public class HistoryController {
     response.setContentType("text/csv; charset=UTF-8");
     response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-    // Write UTF-8 BOM for Excel compatibility
-    response.getOutputStream().write(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+    String headerRow =
+        CsvUtils.toRow(
+            "ID",
+            "Query ID",
+            "Connection",
+            "Executed By",
+            "Executed At",
+            "Type",
+            "Status",
+            "Row Count",
+            "Duration (ms)",
+            "Error Message");
 
-    try (PrintWriter writer =
-        new PrintWriter(
-            new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8))) {
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-      // Write header
-      writer.println(
-          "ID,Query ID,Connection,Executed By,Executed At,Type,Status,Row Count,Duration (ms),Error Message");
-
-      // Write data rows
-      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      for (ExecutionLog log : logs) {
-        writer.println(
-            String.join(
-                ",",
-                escapeCsv(log.getId()),
-                escapeCsv(log.getQueryId()),
-                escapeCsv(log.getConnectionName()),
-                escapeCsv(log.getExecutedBy()),
-                escapeCsv(log.getExecutedAt() != null ? log.getExecutedAt().format(dtf) : ""),
-                escapeCsv(log.getExecutionType() != null ? log.getExecutionType().name() : ""),
-                escapeCsv(log.getStatus() != null ? log.getStatus().name() : ""),
-                escapeCsv(log.getRowCount() != null ? log.getRowCount().toString() : ""),
-                escapeCsv(
-                    log.getExecutionTimeMs() != null ? log.getExecutionTimeMs().toString() : ""),
-                escapeCsv(log.getErrorMessage())));
-      }
-    }
-  }
-
-  private String escapeCsv(String value) {
-    if (value == null) {
-      return "";
-    }
-    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-      return "\"" + value.replace("\"", "\"\"") + "\"";
-    }
-    return value;
+    CsvUtils.writeCsv(
+        response.getOutputStream(),
+        headerRow,
+        writer -> {
+          for (ExecutionLog log : logs) {
+            writer.println(
+                CsvUtils.toRow(
+                    log.getId(),
+                    log.getQueryId(),
+                    log.getConnectionName(),
+                    log.getExecutedBy(),
+                    log.getExecutedAt() != null ? log.getExecutedAt().format(dtf) : "",
+                    log.getExecutionType() != null ? log.getExecutionType().name() : "",
+                    log.getStatus() != null ? log.getStatus().name() : "",
+                    log.getRowCount(),
+                    log.getExecutionTimeMs(),
+                    log.getErrorMessage()));
+          }
+        });
   }
 
   @GetMapping("/{id}")
@@ -155,6 +153,51 @@ public class HistoryController {
     model.addAttribute("log", log);
     model.addAttribute("pageTitle", "Execution Detail");
 
+    // Check if this is an UPDATE execution with backup data
+    if (log.getExecutionType() == ExecutionType.UPDATE) {
+      Optional<BackupRecord> backup = updateWorkflowService.getBackupForExecution(id);
+      if (backup.isPresent()) {
+        model.addAttribute("backup", backup.get());
+        model.addAttribute("canRollback", !backup.get().getIsRolledBack());
+      }
+    }
+
     return "history/detail";
+  }
+
+  /** Download backup data as CSV. */
+  @GetMapping("/{id}/backup/download")
+  public void downloadBackupCsv(@PathVariable String id, HttpServletResponse response)
+      throws IOException {
+
+    var log =
+        logRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Execution not found"));
+
+    Optional<BackupRecord> backupOpt = updateWorkflowService.getBackupForExecution(id);
+    if (backupOpt.isEmpty()) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Backup not found for this execution");
+    }
+
+    BackupRecord backup = backupOpt.get();
+    List<Map<String, Object>> backupData = updateWorkflowService.deserializeBackupData(backup);
+
+    if (backupData.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Backup data is empty");
+    }
+
+    // Get columns from first row
+    List<String> columns = backupData.get(0).keySet().stream().sorted().toList();
+
+    // Set response headers
+    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+    String filename = "backup-" + id.substring(0, 8) + "-" + timestamp + ".csv";
+    response.setContentType("text/csv; charset=UTF-8");
+    response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+    CsvUtils.writeCsv(response.getOutputStream(), backupData, columns, columns);
   }
 }

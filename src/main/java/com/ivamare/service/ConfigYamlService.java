@@ -57,6 +57,9 @@ public class ConfigYamlService {
     if (config.getUpdateSql() != null && !config.getUpdateSql().isBlank()) {
       configMap.put("updateSql", config.getUpdateSql());
     }
+    if (config.getUpdateBindingMode() != null) {
+      configMap.put("updateBindingMode", config.getUpdateBindingMode().name());
+    }
 
     // Parameters
     if (config.getParameters() != null && !config.getParameters().isEmpty()) {

@@ -1,6 +1,7 @@
 package com.ivamare.dto;
 
 import com.ivamare.domain.ParameterType;
+import com.ivamare.domain.UpdateBindingMode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ public class QueryConfigFormDto {
   private String sql;
   private String selectSql;
   private String updateSql;
+  private String updateBindingMode;
   private String primaryKeyColumn;
   private String backupColumns;
   private String rollbackColumns;
@@ -88,6 +90,8 @@ public class QueryConfigFormDto {
         .sql(config.getSql())
         .selectSql(config.getSelectSql())
         .updateSql(config.getUpdateSql())
+        .updateBindingMode(
+            config.getUpdateBindingMode() != null ? config.getUpdateBindingMode().name() : null)
         .primaryKeyColumn(config.getPrimaryKeyColumn())
         .backupColumns(backupCols)
         .rollbackColumns(rollbackCols)
@@ -157,6 +161,7 @@ public class QueryConfigFormDto {
         .sql(sql)
         .selectSql(selectSql)
         .updateSql(updateSql)
+        .updateBindingMode(parseUpdateBindingMode(updateBindingMode))
         .primaryKeyColumn(primaryKeyColumn)
         .backupColumns(backupColList)
         .rollbackColumns(rollbackColList)
@@ -164,6 +169,17 @@ public class QueryConfigFormDto {
         .maxRows(maxRows)
         .parameters(configParams.isEmpty() ? null : configParams)
         .build();
+  }
+
+  private UpdateBindingMode parseUpdateBindingMode(String mode) {
+    if (mode == null || mode.isBlank()) {
+      return null;
+    }
+    try {
+      return UpdateBindingMode.valueOf(mode);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   private List<String> parseColumnList(String columns) {

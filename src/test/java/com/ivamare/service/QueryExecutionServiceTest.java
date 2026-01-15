@@ -336,4 +336,77 @@ class QueryExecutionServiceTest {
 
     assertThat(config.getParameters()).isEmpty();
   }
+
+  @Test
+  void parseConfig_parsesUpdateBindingModeBatch() {
+    String yaml =
+        """
+        selectSql: SELECT id FROM test
+        updateSql: UPDATE test SET x = 1 WHERE id IN (:id_list)
+        updateBindingMode: BATCH
+        primaryKeyColumn: id
+        """;
+
+    QueryConfig config = executionService.parseConfig(yaml);
+
+    assertThat(config.getUpdateBindingMode()).isEqualTo(com.ivamare.domain.UpdateBindingMode.BATCH);
+  }
+
+  @Test
+  void parseConfig_parsesUpdateBindingModeRowByRow() {
+    String yaml =
+        """
+        selectSql: SELECT id, name FROM test
+        updateSql: UPDATE test SET name = UPPER(:name) WHERE id = :id
+        updateBindingMode: ROW_BY_ROW
+        primaryKeyColumn: id
+        """;
+
+    QueryConfig config = executionService.parseConfig(yaml);
+
+    assertThat(config.getUpdateBindingMode())
+        .isEqualTo(com.ivamare.domain.UpdateBindingMode.ROW_BY_ROW);
+  }
+
+  @Test
+  void parseConfig_parsesUpdateBindingModeStandard() {
+    String yaml =
+        """
+        selectSql: SELECT * FROM test
+        updateSql: UPDATE test SET x = :x
+        updateBindingMode: STANDARD
+        """;
+
+    QueryConfig config = executionService.parseConfig(yaml);
+
+    assertThat(config.getUpdateBindingMode())
+        .isEqualTo(com.ivamare.domain.UpdateBindingMode.STANDARD);
+  }
+
+  @Test
+  void parseConfig_invalidUpdateBindingMode_returnsNull() {
+    String yaml =
+        """
+        selectSql: SELECT * FROM test
+        updateSql: UPDATE test SET x = :x
+        updateBindingMode: INVALID_MODE
+        """;
+
+    QueryConfig config = executionService.parseConfig(yaml);
+
+    assertThat(config.getUpdateBindingMode()).isNull();
+  }
+
+  @Test
+  void parseConfig_withoutUpdateBindingMode_returnsNull() {
+    String yaml =
+        """
+        selectSql: SELECT * FROM test
+        updateSql: UPDATE test SET x = :x
+        """;
+
+    QueryConfig config = executionService.parseConfig(yaml);
+
+    assertThat(config.getUpdateBindingMode()).isNull();
+  }
 }

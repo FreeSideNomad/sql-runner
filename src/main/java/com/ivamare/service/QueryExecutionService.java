@@ -213,6 +213,17 @@ public class QueryExecutionService {
       builder.parameters(List.of());
     }
 
+    // Parse update binding mode
+    if (map.containsKey("updateBindingMode")) {
+      String modeStr = (String) map.get("updateBindingMode");
+      try {
+        builder.updateBindingMode(
+            com.ivamare.domain.UpdateBindingMode.valueOf(modeStr.toUpperCase()));
+      } catch (IllegalArgumentException e) {
+        // Invalid mode, leave as null (will default to STANDARD)
+      }
+    }
+
     // Parse backup/rollback columns
     if (map.containsKey("backupColumns")) {
       @SuppressWarnings("unchecked")

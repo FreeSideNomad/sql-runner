@@ -22,6 +22,7 @@ public class ExecutionResult {
   private int totalRows;
   private long executionTimeMs;
   private String errorMessage;
+  private String message;
   private String executionLogId;
 
   /** Create a successful execution result. */

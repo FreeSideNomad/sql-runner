@@ -25,6 +25,8 @@ class UpdateWorkflowServiceTest {
   @Mock private QueryService queryService;
   @Mock private QueryExecutionService queryExecutionService;
   @Mock private BackupRecordRepository backupRepository;
+  @Mock private UpdateParameterAnalyzer parameterAnalyzer;
+  @Mock private SqlScriptGenerator scriptGenerator;
   @Mock private DataSource dataSource;
 
   private UpdateWorkflowService service;
@@ -33,7 +35,13 @@ class UpdateWorkflowServiceTest {
   void setUp() {
     service =
         new UpdateWorkflowService(
-            connectionRegistry, logService, queryService, queryExecutionService, backupRepository);
+            connectionRegistry,
+            logService,
+            queryService,
+            queryExecutionService,
+            backupRepository,
+            parameterAnalyzer,
+            scriptGenerator);
   }
 
   @Test
