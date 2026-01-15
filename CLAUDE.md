@@ -80,6 +80,25 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ### Before Pushing
 - Run `mvn verify -Pcoverage` to run full test suite with coverage check
 
+### After Pushing
+- ALWAYS check GitHub Actions for CI status after pushing
+- Use `gh run list` to see recent workflow runs
+- Use `gh run view <run-id>` to see details of a specific run
+- If CI fails, fix the issues before creating a PR or requesting review
+- Do not leave broken builds unattended
+
+## Efficiency
+
+### Parallel Execution
+- Run independent tasks in parallel whenever possible
+- Examples of parallelizable tasks:
+  - Multiple file reads/writes that don't depend on each other
+  - Multiple search/grep operations
+  - Creating multiple GitHub issues
+  - Running independent bash commands
+- Use single message with multiple tool calls for parallel execution
+- Only run sequentially when there are dependencies between tasks
+
 ## Project Structure
 
 ### Documentation
