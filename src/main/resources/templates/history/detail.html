@@ -98,5 +98,81 @@
         <h2 class="text-lg font-semibold text-red-800 mb-4">Error Message</h2>
         <pre class="bg-white rounded-lg p-4 overflow-x-auto text-sm font-mono text-red-700 whitespace-pre-wrap" th:text="${log.errorMessage}">Error details here</pre>
     </div>
+
+    <!-- Backup & Rollback Section (for UPDATE executions) -->
+    <div th:if="${backup != null}" class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Backup & Rollback</h2>
+
+        <!-- Backup Info -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Backup Rows</label>
+                <p class="mt-1 text-lg font-semibold text-gray-900" th:text="${backup.rowCount}">0</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Rollback Status</label>
+                <div class="mt-1">
+                    <span th:if="${backup.isRolledBack}"
+                          class="px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800">
+                        Rolled Back
+                    </span>
+                    <span th:unless="${backup.isRolledBack}"
+                          class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                        Active
+                    </span>
+                </div>
+            </div>
+            <div th:if="${backup.rolledBackAt != null}">
+                <label class="block text-sm font-medium text-gray-500">Rolled Back At</label>
+                <p class="mt-1 text-gray-900" th:text="${#temporals.format(backup.rolledBackAt, 'yyyy-MM-dd HH:mm:ss')}">Date</p>
+                <p class="text-sm text-gray-500" th:text="'by ' + ${backup.rolledBackBy}">by user</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3">
+            <!-- Download Backup Data -->
+            <a th:href="@{/history/{id}/backup/download(id=${log.id})}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download Backup (CSV)
+            </a>
+
+            <!-- Download Rollback Script -->
+            <a th:href="@{/queries/{qid}/update/rollback/{eid}/download-script(qid=${log.queryId},eid=${log.id})}"
+               class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+                Download Rollback Script
+            </a>
+
+            <!-- Execute Rollback (only if not already rolled back) -->
+            <form th:if="${canRollback}"
+                  th:action="@{/queries/{qid}/update/rollback/{eid}(qid=${log.queryId},eid=${log.id})}"
+                  method="post"
+                  class="inline"
+                  onsubmit="return confirm('Are you sure you want to rollback this update? This will restore the original values for all affected rows.');">
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                    </svg>
+                    Execute Rollback
+                </button>
+            </form>
+
+            <!-- Rollback Already Done -->
+            <span th:if="${backup.isRolledBack}"
+                  class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-500 font-medium rounded-lg cursor-not-allowed">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Already Rolled Back
+            </span>
+        </div>
+    </div>
 </div>
 </html>

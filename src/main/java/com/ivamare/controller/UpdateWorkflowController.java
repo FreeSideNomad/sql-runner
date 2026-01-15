@@ -6,12 +6,10 @@ import com.ivamare.dto.QueryConfig;
 import com.ivamare.service.QueryExecutionService;
 import com.ivamare.service.QueryService;
 import com.ivamare.service.UpdateWorkflowService;
+import com.ivamare.util.CsvUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,26 +111,10 @@ public class UpdateWorkflowController {
     response.setContentType("text/csv; charset=UTF-8");
     response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-    response.getOutputStream().write(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+    List<String> columns =
+        result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
 
-    try (PrintWriter writer =
-        new PrintWriter(
-            new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8))) {
-
-      List<String> columns =
-          result.getColumns().stream().filter(col -> col != null && !col.trim().isEmpty()).toList();
-
-      writer.println(
-          columns.stream().map(this::escapeCsv).collect(java.util.stream.Collectors.joining(",")));
-
-      for (Map<String, Object> row : result.getRows()) {
-        String line =
-            columns.stream()
-                .map(col -> escapeCsv(row.get(col) != null ? row.get(col).toString() : ""))
-                .collect(java.util.stream.Collectors.joining(","));
-        writer.println(line);
-      }
-    }
+    CsvUtils.writeCsv(response.getOutputStream(), result.getRows(), columns, columns);
   }
 
   /** Step 3: Execute the UPDATE with backup. */
@@ -276,15 +258,5 @@ public class UpdateWorkflowController {
     }
 
     return "redirect:/history";
-  }
-
-  private String escapeCsv(String value) {
-    if (value == null) {
-      return "";
-    }
-    if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-      return "\"" + value.replace("\"", "\"\"") + "\"";
-    }
-    return value;
   }
 }

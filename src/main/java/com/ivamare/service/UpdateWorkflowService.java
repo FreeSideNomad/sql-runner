@@ -672,6 +672,16 @@ public class UpdateWorkflowService {
     }
   }
 
+  /**
+   * Deserialize backup data from a BackupRecord.
+   *
+   * @param backup the backup record
+   * @return list of row data as maps
+   */
+  public List<Map<String, Object>> deserializeBackupData(BackupRecord backup) {
+    return deserializeBackupData(backup.getBackupData());
+  }
+
   private String generateRollbackSql(
       Query query, QueryConfig config, String pkColumn, List<String> rollbackColumns) {
 
