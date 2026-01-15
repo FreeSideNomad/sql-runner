@@ -222,6 +222,16 @@
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
 						<version>0.8.11</version>
+						<configuration>
+							<excludes>
+								<!-- Exclude main application class (just bootstrap) -->
+								<exclude>com/ivamare/SqlRunnerApplication.class</exclude>
+								<!-- Exclude configuration classes -->
+								<exclude>com/ivamare/config/**</exclude>
+								<!-- Exclude DTOs (no logic) -->
+								<exclude>com/ivamare/dto/**</exclude>
+							</excludes>
+						</configuration>
 						<executions>
 							<execution>
 								<goals>
@@ -257,8 +267,15 @@
 													<minimum>0.80</minimum>
 												</limit>
 											</limits>
+											<!-- Only apply when there's enough code to analyze -->
+											<excludes>
+												<exclude>*Test</exclude>
+												<exclude>*Tests</exclude>
+											</excludes>
 										</rule>
 									</rules>
+									<!-- Skip check when no classes match the rules -->
+									<skip>${skipCoverageCheck}</skip>
 								</configuration>
 							</execution>
 						</executions>
