@@ -28,6 +28,7 @@ public class QueryExecutionService {
   private final QueryService queryService;
 
   private final Map<String, Statement> activeStatements = new ConcurrentHashMap<>();
+  private final Map<String, Future<?>> activeExecutions = new ConcurrentHashMap<>();
 
   /**
    * Execute a SELECT query.
@@ -99,9 +100,12 @@ public class QueryExecutionService {
   public ExecutionResult executeSelectWithTimeout(
       String queryId, Map<String, String> rawParams, String executedBy, int timeoutSeconds) {
 
+    String executionId = UUID.randomUUID().toString();
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<ExecutionResult> future =
         executor.submit(() -> executeSelect(queryId, rawParams, executedBy));
+
+    activeExecutions.put(executionId, future);
 
     try {
       return future.get(timeoutSeconds, TimeUnit.SECONDS);
@@ -114,8 +118,29 @@ public class QueryExecutionService {
       log.error("Query execution error", e);
       return ExecutionResult.failure(e.getMessage(), 0, null);
     } finally {
+      activeExecutions.remove(executionId);
       executor.shutdownNow();
     }
+  }
+
+  /**
+   * Cancel a running query execution.
+   *
+   * @param executionId The execution ID to cancel
+   * @return true if cancelled, false if not found
+   */
+  public boolean cancelExecution(String executionId) {
+    Future<?> future = activeExecutions.remove(executionId);
+    if (future != null) {
+      log.info("Cancelling execution '{}'", executionId);
+      return future.cancel(true);
+    }
+    return false;
+  }
+
+  /** Get the number of currently active executions. */
+  public int getActiveExecutionCount() {
+    return activeExecutions.size();
   }
 
   /**

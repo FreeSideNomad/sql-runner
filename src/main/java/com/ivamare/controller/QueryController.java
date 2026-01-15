@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -35,10 +36,14 @@ public class QueryController {
   private final ConnectionRegistry connectionRegistry;
   private final QueryExecutionService executionService;
 
+  @Value("${sqlrunner.read-only-mode:false}")
+  private boolean readOnlyMode;
+
   @GetMapping
   public String listQueries(Model model) {
     model.addAttribute("queries", queryService.getAllQueriesSortedByName());
     model.addAttribute("pageTitle", "Queries");
+    model.addAttribute("readOnlyMode", readOnlyMode);
     return "queries/list";
   }
 
@@ -52,7 +57,11 @@ public class QueryController {
 
   @GetMapping("/new")
   @PreAuthorize("hasRole('ADMIN')")
-  public String newQueryForm(Model model) {
+  public String newQueryForm(Model model, RedirectAttributes redirectAttributes) {
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Cannot create queries in read-only mode");
+      return "redirect:/queries";
+    }
     QueryFormDto form = new QueryFormDto();
     form.ensureConfigInitialized();
     model.addAttribute("query", form);
@@ -66,7 +75,12 @@ public class QueryController {
 
   @GetMapping("/{id}/edit")
   @PreAuthorize("hasRole('ADMIN')")
-  public String editQueryForm(@PathVariable String id, Model model) {
+  public String editQueryForm(
+      @PathVariable String id, Model model, RedirectAttributes redirectAttributes) {
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Cannot edit queries in read-only mode");
+      return "redirect:/queries";
+    }
     QueryFormDto form = queryService.getQueryForEdit(id);
     form.ensureConfigInitialized();
     model.addAttribute("query", form);
@@ -86,6 +100,11 @@ public class QueryController {
       Authentication auth,
       Model model,
       RedirectAttributes redirectAttributes) {
+
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Cannot save queries in read-only mode");
+      return "redirect:/queries";
+    }
 
     if (result.hasErrors()) {
       form.ensureConfigInitialized();
@@ -114,6 +133,10 @@ public class QueryController {
   @PreAuthorize("hasRole('ADMIN')")
   public String deleteQuery(
       @PathVariable String id, Authentication auth, RedirectAttributes redirectAttributes) {
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Cannot delete queries in read-only mode");
+      return "redirect:/queries";
+    }
     queryService.deleteQuery(id, auth.getName());
     redirectAttributes.addFlashAttribute("message", "Query deleted successfully");
     return "redirect:/queries";

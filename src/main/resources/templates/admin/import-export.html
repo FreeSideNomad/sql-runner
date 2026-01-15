@@ -45,36 +45,44 @@
             <!-- Import Card -->
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center mb-4">
-                    <div class="bg-green-100 p-3 rounded-full">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div th:class="${readOnlyMode} ? 'bg-gray-100 p-3 rounded-full' : 'bg-green-100 p-3 rounded-full'">
+                        <svg th:class="${readOnlyMode} ? 'w-6 h-6 text-gray-400' : 'w-6 h-6 text-green-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                         </svg>
                     </div>
                     <h2 class="text-lg font-semibold text-gray-800 ml-3">Import Configuration</h2>
+                    <span th:if="${readOnlyMode}" class="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Read-Only Mode</span>
                 </div>
-                <p class="text-gray-600 mb-4">
-                    Import query configurations from a YAML file. The import will:
-                </p>
-                <ul class="text-gray-600 text-sm mb-4 list-disc list-inside">
-                    <li>Validate the configuration</li>
-                    <li>Show preview before applying</li>
-                    <li>Create new or update existing queries</li>
-                </ul>
-                <form th:action="@{/admin/import/validate}" method="post" enctype="multipart/form-data">
-                    <div class="mb-4">
-                        <input type="file" name="file" accept=".yaml,.yml"
-                               class="block w-full text-sm text-gray-500
-                                      file:mr-4 file:py-2 file:px-4
-                                      file:rounded-lg file:border-0
-                                      file:text-sm file:font-semibold
-                                      file:bg-green-50 file:text-green-700
-                                      hover:file:bg-green-100">
-                    </div>
-                    <button type="submit"
-                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        Validate & Preview
-                    </button>
-                </form>
+                <div th:if="${readOnlyMode}">
+                    <p class="text-gray-500 mb-4">
+                        Import is disabled in read-only mode. This environment is configured for production use where configuration changes are not permitted.
+                    </p>
+                </div>
+                <div th:unless="${readOnlyMode}">
+                    <p class="text-gray-600 mb-4">
+                        Import query configurations from a YAML file. The import will:
+                    </p>
+                    <ul class="text-gray-600 text-sm mb-4 list-disc list-inside">
+                        <li>Validate the configuration</li>
+                        <li>Show preview before applying</li>
+                        <li>Create new or update existing queries</li>
+                    </ul>
+                    <form th:action="@{/admin/import/validate}" method="post" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <input type="file" name="file" accept=".yaml,.yml"
+                                   class="block w-full text-sm text-gray-500
+                                          file:mr-4 file:py-2 file:px-4
+                                          file:rounded-lg file:border-0
+                                          file:text-sm file:font-semibold
+                                          file:bg-green-50 file:text-green-700
+                                          hover:file:bg-green-100">
+                        </div>
+                        <button type="submit"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            Validate & Preview
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

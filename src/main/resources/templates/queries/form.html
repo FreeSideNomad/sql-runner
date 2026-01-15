@@ -2,6 +2,21 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::content})}">
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<style>
+    .CodeMirror {
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 14px;
+        height: auto;
+    }
+    .CodeMirror-focused {
+        border-color: #003168;
+        box-shadow: 0 0 0 1px #003168;
+    }
+</style>
 <div th:fragment="content">
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-6">
@@ -399,6 +414,58 @@
                 enumSection.classList.add('hidden');
             }
         }
+    </script>
+
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sqlConfig = {
+                mode: 'text/x-sql',
+                theme: 'material-darker',
+                lineNumbers: true,
+                lineWrapping: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                viewportMargin: Infinity,
+                extraKeys: {
+                    "Tab": function(cm) {
+                        cm.replaceSelection("    ", "end");
+                    }
+                }
+            };
+
+            // Initialize CodeMirror for SELECT query SQL
+            const sqlTextarea = document.getElementById('config.sql');
+            if (sqlTextarea) {
+                const sqlEditor = CodeMirror.fromTextArea(sqlTextarea, {
+                    ...sqlConfig,
+                    placeholder: 'SELECT * FROM table WHERE id = :id'
+                });
+                sqlEditor.setSize(null, 200);
+            }
+
+            // Initialize CodeMirror for UPDATE WORKFLOW select SQL
+            const selectSqlTextarea = document.getElementById('config.selectSql');
+            if (selectSqlTextarea) {
+                const selectSqlEditor = CodeMirror.fromTextArea(selectSqlTextarea, {
+                    ...sqlConfig,
+                    placeholder: 'SELECT id, name, status FROM table WHERE region = :region'
+                });
+                selectSqlEditor.setSize(null, 150);
+            }
+
+            // Initialize CodeMirror for UPDATE WORKFLOW update SQL
+            const updateSqlTextarea = document.getElementById('config.updateSql');
+            if (updateSqlTextarea) {
+                const updateSqlEditor = CodeMirror.fromTextArea(updateSqlTextarea, {
+                    ...sqlConfig,
+                    placeholder: 'UPDATE table SET status = :newStatus WHERE id = :id'
+                });
+                updateSqlEditor.setSize(null, 150);
+            }
+        });
     </script>
 </div>
 </html>

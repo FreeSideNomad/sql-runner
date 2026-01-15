@@ -9,15 +9,23 @@
             <h1 class="text-2xl font-bold text-rbc-blue">Queries</h1>
             <p class="text-gray-600 mt-1">Browse and execute parameterized queries</p>
         </div>
-        <a th:href="@{/queries/new}" sec:authorize="hasRole('ADMIN')"
+        <a th:href="@{/queries/new}" sec:authorize="hasRole('ADMIN')" th:unless="${readOnlyMode}"
            class="px-4 py-2 bg-rbc-yellow text-rbc-blue font-semibold rounded-lg hover:bg-yellow-400 transition">
             + New Query
         </a>
+        <span th:if="${readOnlyMode}" sec:authorize="hasRole('ADMIN')"
+              class="px-4 py-2 bg-gray-200 text-gray-500 font-semibold rounded-lg cursor-not-allowed"
+              title="Modifications disabled in read-only mode">
+            Read-Only Mode
+        </span>
     </div>
 
     <!-- Flash Messages -->
     <div th:if="${message}" class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
         <span th:text="${message}">Message</span>
+    </div>
+    <div th:if="${error}" class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+        <span th:text="${error}">Error</span>
     </div>
 
     <!-- Queries Table -->
@@ -69,7 +77,7 @@
                                class="text-orange-600 hover:text-orange-800 font-medium">Run Update</a>
                             <a th:href="@{/queries/{id}(id=${query.id})}"
                                class="text-rbc-blue hover:text-rbc-light-blue">View</a>
-                            <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')"
+                            <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')" th:unless="${readOnlyMode}"
                                class="text-gray-500 hover:text-gray-700">Edit</a>
                         </div>
                     </td>

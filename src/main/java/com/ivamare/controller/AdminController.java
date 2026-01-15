@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -35,6 +36,9 @@ public class AdminController {
   private final ConfigImportService importService;
   private final ConnectionRegistry connectionRegistry;
   private final QueryRepository queryRepository;
+
+  @Value("${sqlrunner.read-only-mode:false}")
+  private boolean readOnlyMode;
 
   @GetMapping
   public String adminDashboard(Model model) {
@@ -72,7 +76,11 @@ public class AdminController {
   // ==================== Import ====================
 
   @GetMapping("/import")
-  public String importPage(Model model) {
+  public String importPage(Model model, RedirectAttributes redirectAttributes) {
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Import is disabled in read-only mode");
+      return "redirect:/admin/import-export";
+    }
     model.addAttribute("pageTitle", "Import Configuration");
     return "admin/import";
   }
@@ -81,6 +89,11 @@ public class AdminController {
   public String validateImport(
       @RequestParam("file") MultipartFile file, Model model, RedirectAttributes redirectAttributes)
       throws IOException {
+
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Import is disabled in read-only mode");
+      return "redirect:/admin/import-export";
+    }
 
     if (file.isEmpty()) {
       redirectAttributes.addFlashAttribute("error", "Please select a file to import");
@@ -102,6 +115,11 @@ public class AdminController {
       @RequestParam("yamlContent") String yamlContent,
       Authentication auth,
       RedirectAttributes redirectAttributes) {
+
+    if (readOnlyMode) {
+      redirectAttributes.addFlashAttribute("error", "Import is disabled in read-only mode");
+      return "redirect:/admin/import-export";
+    }
 
     ImportResult result = importService.importQueries(yamlContent, auth.getName());
 
@@ -156,6 +174,7 @@ public class AdminController {
   @GetMapping("/import-export")
   public String importExportPage(Model model) {
     model.addAttribute("pageTitle", "Import/Export Configuration");
+    model.addAttribute("readOnlyMode", readOnlyMode);
     return "admin/import-export";
   }
 }
