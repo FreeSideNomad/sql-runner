@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content})}">
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-rbc-blue">Version History</h1>
+            <p class="text-gray-600 mt-1">
+                <span th:text="${query.name}">Query Name</span> -
+                <span th:text="${versions.size()}">0</span> versions
+            </p>
+        </div>
+        <a th:href="@{/queries/{id}(id=${query.id})}" class="text-gray-600 hover:text-gray-800">
+            &larr; Back to Query
+        </a>
+    </div>
+
+    <!-- Current Version Badge -->
+    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-blue-800">Current version: <strong th:text="'v' + ${query.currentVersion}">v1</strong></span>
+        </div>
+    </div>
+
+    <!-- Version List -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">By</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <tr th:each="version : ${versions}"
+                    th:class="${version.version == query.currentVersion} ? 'bg-blue-50' : 'hover:bg-gray-50'">
+                    <td class="px-6 py-4">
+                        <span class="font-medium" th:text="'v' + ${version.version}">v1</span>
+                        <span th:if="${version.version == query.currentVersion}"
+                              class="ml-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Current</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500"
+                        th:text="${#temporals.format(version.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2024-01-01 12:00:00</td>
+                    <td class="px-6 py-4 text-sm text-gray-500" th:text="${version.createdBy}">user</td>
+                    <td class="px-6 py-4 text-right">
+                        <a th:href="@{/queries/{id}/versions/{v}(id=${query.id}, v=${version.version})}"
+                           class="text-rbc-blue hover:underline font-medium">View Config</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</html>
