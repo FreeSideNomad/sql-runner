@@ -15,120 +15,228 @@
     </div>
 
     <!-- Form -->
-    <form th:action="@{/queries/save}" method="post" th:object="${query}" class="bg-white rounded-lg shadow-md p-6">
+    <form th:action="@{/queries/save}" method="post" th:object="${query}" class="space-y-6">
         <input type="hidden" th:field="*{id}">
 
         <!-- Validation Errors Summary -->
-        <div th:if="${#fields.hasErrors('*')}" class="mb-6 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div th:if="${#fields.hasErrors('*')}" class="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
             <p class="font-semibold">Please correct the following errors:</p>
             <ul class="list-disc list-inside mt-2">
                 <li th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</li>
             </ul>
         </div>
 
-        <!-- Basic Information -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input type="text" id="name" th:field="*{name}" required
-                       th:classappend="${#fields.hasErrors('name')} ? 'border-red-500' : ''"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
-                <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-red-500 text-sm mt-1">Error</p>
+        <!-- Basic Information Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input type="text" id="name" th:field="*{name}" required
+                           th:classappend="${#fields.hasErrors('name')} ? 'border-red-500' : ''"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                    <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-red-500 text-sm mt-1">Error</p>
+                </div>
+
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <input type="text" id="category" th:field="*{category}" required list="categoryList"
+                           th:classappend="${#fields.hasErrors('category')} ? 'border-red-500' : ''"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="Select or enter a new category">
+                    <datalist id="categoryList">
+                        <option th:each="cat : ${categories}" th:value="${cat}">
+                    </datalist>
+                    <p th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="text-red-500 text-sm mt-1">Error</p>
+                </div>
             </div>
 
-            <div>
-                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                <input type="text" id="category" th:field="*{category}" required list="categoryList"
-                       th:classappend="${#fields.hasErrors('category')} ? 'border-red-500' : ''"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
-                       placeholder="Select or enter a new category">
-                <datalist id="categoryList">
-                    <option th:each="cat : ${categories}" th:value="${cat}">
-                </datalist>
-                <p th:if="${#fields.hasErrors('category')}" th:errors="*{category}" class="text-red-500 text-sm mt-1">Error</p>
+            <div class="mt-4">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="description" th:field="*{description}" rows="2"
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                          placeholder="Brief description of what this query does"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <label for="connectionName" class="block text-sm font-medium text-gray-700 mb-1">Connection *</label>
+                    <select id="connectionName" th:field="*{connectionName}" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                        <option value="">Select a connection</option>
+                        <option th:each="conn : ${connections}" th:value="${conn.id}" th:text="${conn.name}">Connection</option>
+                    </select>
+                    <p th:if="${connections.empty}" class="text-yellow-600 text-sm mt-1">
+                        No connections configured. Contact an administrator.
+                    </p>
+                </div>
+
+                <div>
+                    <label for="queryType" class="block text-sm font-medium text-gray-700 mb-1">Query Type *</label>
+                    <select id="queryType" th:field="*{queryType}" required
+                            onchange="toggleQueryTypeFields()"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
+                        <option value="">Select a type</option>
+                        <option value="SELECT">SELECT - Read-only queries</option>
+                        <option value="UPDATE_WORKFLOW">UPDATE WORKFLOW - Queries with backup/rollback</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <div class="mb-6">
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea id="description" th:field="*{description}" rows="2"
-                      th:classappend="${#fields.hasErrors('description')} ? 'border-red-500' : ''"
-                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
-                      placeholder="Brief description of what this query does"></textarea>
-            <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-red-500 text-sm mt-1">Error</p>
+        <!-- SQL Configuration Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">SQL Configuration</h2>
+
+            <!-- For SELECT queries -->
+            <div id="selectSqlSection">
+                <label for="config.sql" class="block text-sm font-medium text-gray-700 mb-1">SQL Statement *</label>
+                <textarea id="config.sql" th:field="*{config.sql}" rows="8"
+                          class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                          placeholder="SELECT * FROM table WHERE id = :id"></textarea>
+                <p class="text-gray-500 text-xs mt-1">Use :paramName for named parameters</p>
+            </div>
+
+            <!-- For UPDATE_WORKFLOW queries -->
+            <div id="updateSqlSection" class="hidden space-y-4">
+                <div>
+                    <label for="config.selectSql" class="block text-sm font-medium text-gray-700 mb-1">Select SQL (for preview) *</label>
+                    <textarea id="config.selectSql" th:field="*{config.selectSql}" rows="5"
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                              placeholder="SELECT id, name, status FROM table WHERE region = :region"></textarea>
+                </div>
+                <div>
+                    <label for="config.updateSql" class="block text-sm font-medium text-gray-700 mb-1">Update SQL *</label>
+                    <textarea id="config.updateSql" th:field="*{config.updateSql}" rows="5"
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                              placeholder="UPDATE table SET status = :newStatus WHERE id = :id"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="config.primaryKeyColumn" class="block text-sm font-medium text-gray-700 mb-1">Primary Key Column</label>
+                        <input type="text" id="config.primaryKeyColumn" th:field="*{config.primaryKeyColumn}"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                               placeholder="id">
+                    </div>
+                    <div>
+                        <label for="config.backupColumns" class="block text-sm font-medium text-gray-700 mb-1">Backup Columns</label>
+                        <input type="text" id="config.backupColumns" th:field="*{config.backupColumns}"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                               placeholder="status, updated_at">
+                        <p class="text-gray-500 text-xs mt-1">Comma-separated</p>
+                    </div>
+                    <div>
+                        <label for="config.rollbackColumns" class="block text-sm font-medium text-gray-700 mb-1">Rollback Columns</label>
+                        <input type="text" id="config.rollbackColumns" th:field="*{config.rollbackColumns}"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                               placeholder="status">
+                        <p class="text-gray-500 text-xs mt-1">Comma-separated</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optional Settings -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                <div>
+                    <label for="config.timeoutSeconds" class="block text-sm font-medium text-gray-700 mb-1">Timeout (seconds)</label>
+                    <input type="number" id="config.timeoutSeconds" th:field="*{config.timeoutSeconds}"
+                           min="1" max="3600"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="60">
+                </div>
+                <div>
+                    <label for="config.maxRows" class="block text-sm font-medium text-gray-700 mb-1">Max Rows</label>
+                    <input type="number" id="config.maxRows" th:field="*{config.maxRows}"
+                           min="1" max="100000"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="1000">
+                </div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label for="connectionName" class="block text-sm font-medium text-gray-700 mb-1">Connection *</label>
-                <select id="connectionName" th:field="*{connectionName}" required
-                        th:classappend="${#fields.hasErrors('connectionName')} ? 'border-red-500' : ''"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
-                    <option value="">Select a connection</option>
-                    <option th:each="conn : ${connections}" th:value="${conn.id}" th:text="${conn.name}">Connection</option>
-                </select>
-                <p th:if="${#fields.hasErrors('connectionName')}" th:errors="*{connectionName}" class="text-red-500 text-sm mt-1">Error</p>
-                <p th:if="${connections.empty}" class="text-yellow-600 text-sm mt-1">
-                    No connections configured. Contact an administrator to set up database connections.
-                </p>
+        <!-- Parameters Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">Parameters</h2>
+                <button type="button" onclick="addParameter()"
+                        class="px-3 py-1.5 bg-rbc-blue text-white text-sm font-medium rounded hover:bg-rbc-light-blue transition">
+                    + Add Parameter
+                </button>
             </div>
 
-            <div>
-                <label for="queryType" class="block text-sm font-medium text-gray-700 mb-1">Query Type *</label>
-                <select id="queryType" th:field="*{queryType}" required
-                        th:classappend="${#fields.hasErrors('queryType')} ? 'border-red-500' : ''"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-rbc-blue focus:border-rbc-blue">
-                    <option value="">Select a type</option>
-                    <option value="SELECT">SELECT - Read-only queries</option>
-                    <option value="UPDATE_WORKFLOW">UPDATE WORKFLOW - Queries with backup/rollback</option>
-                </select>
-                <p th:if="${#fields.hasErrors('queryType')}" th:errors="*{queryType}" class="text-red-500 text-sm mt-1">Error</p>
+            <div id="parametersContainer" class="space-y-4">
+                <!-- Existing parameters -->
+                <div th:each="paramDef, iterStat : *{config.parameters}" class="parameter-row border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-sm font-medium text-gray-700">Parameter <span th:text="${iterStat.index + 1}">1</span></span>
+                        <button type="button" onclick="removeParameter(this)" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                            <input type="text" th:field="*{config.parameters[__${iterStat.index}__].name}" required
+                                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                                   placeholder="paramName">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Label</label>
+                            <input type="text" th:field="*{config.parameters[__${iterStat.index}__].label}"
+                                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                                   placeholder="Display Label">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Data Type</label>
+                            <select th:field="*{config.parameters[__${iterStat.index}__].dataType}"
+                                    onchange="toggleEnumValues(this)"
+                                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue">
+                                <option th:each="ptype : ${parameterTypes}" th:value="${ptype}" th:text="${ptype}">TYPE</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <label class="flex items-center gap-1">
+                                <input type="checkbox" th:field="*{config.parameters[__${iterStat.index}__].required}"
+                                       class="rounded border-gray-300 text-rbc-blue focus:ring-rbc-blue">
+                                <span class="text-xs text-gray-600">Required</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Default Value</label>
+                            <input type="text" th:field="*{config.parameters[__${iterStat.index}__].defaultValue}"
+                                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                                   placeholder="default">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Validation (regex)</label>
+                            <input type="text" th:field="*{config.parameters[__${iterStat.index}__].validation}"
+                                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                                   placeholder="^[A-Z]{2}$">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">List Separator</label>
+                            <input type="text" th:field="*{config.parameters[__${iterStat.index}__].listSeparator}"
+                                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                                   placeholder=",">
+                        </div>
+                    </div>
+                    <div class="mt-3 enum-values-section" th:classappend="${paramDef.dataType?.name() == 'ENUM'} ? '' : 'hidden'">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Enum Values (one per line, format: value or value:description)</label>
+                        <textarea th:field="*{config.parameters[__${iterStat.index}__].enumValues}" rows="3"
+                                  class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:ring-rbc-blue focus:border-rbc-blue"
+                                  placeholder="ACTIVE:Active status&#10;INACTIVE:Inactive status&#10;PENDING"></textarea>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Configuration YAML -->
-        <div class="mb-6">
-            <label for="configYaml" class="block text-sm font-medium text-gray-700 mb-1">Configuration (YAML) *</label>
-            <div class="text-xs text-gray-500 mb-2">
-                Define the SQL query and parameters using YAML format.
-                <a href="#" class="text-rbc-blue hover:underline" onclick="toggleYamlHelp(); return false;">Show example</a>
+            <div id="noParametersMessage" th:if="${#lists.isEmpty(query.config.parameters)}" class="text-gray-500 text-sm text-center py-4">
+                No parameters defined. Click "Add Parameter" to add one.
             </div>
-            <div id="yamlHelp" class="hidden mb-2 bg-gray-50 p-3 rounded text-xs font-mono">
-<pre>sql: |
-  SELECT * FROM customers
-  WHERE region = :region
-  AND status = :status
-
-parameters:
-  - name: region
-    label: Region
-    type: STRING
-    required: true
-  - name: status
-    label: Status
-    type: ENUM
-    required: true
-    enumValues:
-      - ACTIVE
-      - INACTIVE
-      - PENDING</pre>
-            </div>
-            <textarea id="configYaml" th:field="*{configYaml}" rows="15" required
-                      th:classappend="${#fields.hasErrors('configYaml')} ? 'border-red-500' : ''"
-                      class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-sm focus:ring-rbc-blue focus:border-rbc-blue"
-                      placeholder="sql: |
-  SELECT * FROM table WHERE id = :id
-
-parameters:
-  - name: id
-    label: Record ID
-    type: STRING
-    required: true"></textarea>
-            <p th:if="${#fields.hasErrors('configYaml')}" th:errors="*{configYaml}" class="text-red-500 text-sm mt-1">Error</p>
         </div>
 
         <!-- Form Actions -->
-        <div class="flex items-center justify-end gap-4 pt-4 border-t">
+        <div class="flex items-center justify-end gap-4">
             <a th:href="@{/queries}" class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
                 Cancel
             </a>
@@ -138,10 +246,158 @@ parameters:
         </div>
     </form>
 
+    <!-- Parameter Template (hidden) -->
+    <template id="parameterTemplate">
+        <div class="parameter-row border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-3">
+                <span class="text-sm font-medium text-gray-700">Parameter <span class="param-number">1</span></span>
+                <button type="button" onclick="removeParameter(this)" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                    <input type="text" name="config.parameters[INDEX].name" required
+                           class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="paramName">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Label</label>
+                    <input type="text" name="config.parameters[INDEX].label"
+                           class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="Display Label">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Data Type</label>
+                    <select name="config.parameters[INDEX].dataType"
+                            onchange="toggleEnumValues(this)"
+                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue">
+                        <option value="STRING">STRING</option>
+                        <option value="INTEGER">INTEGER</option>
+                        <option value="DECIMAL">DECIMAL</option>
+                        <option value="DATE">DATE</option>
+                        <option value="DATETIME">DATETIME</option>
+                        <option value="BOOLEAN">BOOLEAN</option>
+                        <option value="ENUM">ENUM</option>
+                        <option value="LIST_STRING">LIST_STRING</option>
+                        <option value="LIST_INTEGER">LIST_INTEGER</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <label class="flex items-center gap-1">
+                        <input type="checkbox" name="config.parameters[INDEX].required"
+                               class="rounded border-gray-300 text-rbc-blue focus:ring-rbc-blue">
+                        <span class="text-xs text-gray-600">Required</span>
+                    </label>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Default Value</label>
+                    <input type="text" name="config.parameters[INDEX].defaultValue"
+                           class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="default">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Validation (regex)</label>
+                    <input type="text" name="config.parameters[INDEX].validation"
+                           class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder="^[A-Z]{2}$">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">List Separator</label>
+                    <input type="text" name="config.parameters[INDEX].listSeparator"
+                           class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-rbc-blue focus:border-rbc-blue"
+                           placeholder=",">
+                </div>
+            </div>
+            <div class="mt-3 enum-values-section hidden">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Enum Values (one per line, format: value or value:description)</label>
+                <textarea name="config.parameters[INDEX].enumValues" rows="3"
+                          class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm font-mono focus:ring-rbc-blue focus:border-rbc-blue"
+                          placeholder="ACTIVE:Active status&#10;INACTIVE:Inactive status&#10;PENDING"></textarea>
+            </div>
+        </div>
+    </template>
+
     <script>
-        function toggleYamlHelp() {
-            const help = document.getElementById('yamlHelp');
-            help.classList.toggle('hidden');
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleQueryTypeFields();
+        });
+
+        function toggleQueryTypeFields() {
+            const queryType = document.getElementById('queryType').value;
+            const selectSection = document.getElementById('selectSqlSection');
+            const updateSection = document.getElementById('updateSqlSection');
+
+            if (queryType === 'UPDATE_WORKFLOW') {
+                selectSection.classList.add('hidden');
+                updateSection.classList.remove('hidden');
+            } else {
+                selectSection.classList.remove('hidden');
+                updateSection.classList.add('hidden');
+            }
+        }
+
+        function addParameter() {
+            const container = document.getElementById('parametersContainer');
+            const template = document.getElementById('parameterTemplate');
+            const noParamsMessage = document.getElementById('noParametersMessage');
+
+            if (noParamsMessage) {
+                noParamsMessage.remove();
+            }
+
+            const index = container.querySelectorAll('.parameter-row').length;
+            const clone = template.content.cloneNode(true);
+
+            // Update all name attributes with correct index
+            clone.querySelectorAll('[name]').forEach(el => {
+                el.name = el.name.replace('INDEX', index);
+            });
+
+            // Update parameter number display
+            clone.querySelector('.param-number').textContent = index + 1;
+
+            container.appendChild(clone);
+            updateParameterNumbers();
+        }
+
+        function removeParameter(button) {
+            const row = button.closest('.parameter-row');
+            row.remove();
+            updateParameterNumbers();
+            reindexParameters();
+        }
+
+        function updateParameterNumbers() {
+            const rows = document.querySelectorAll('#parametersContainer .parameter-row');
+            rows.forEach((row, index) => {
+                const numberSpan = row.querySelector('.param-number');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+            });
+        }
+
+        function reindexParameters() {
+            const rows = document.querySelectorAll('#parametersContainer .parameter-row');
+            rows.forEach((row, index) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/parameters\[\d+\]/, `parameters[${index}]`);
+                });
+            });
+        }
+
+        function toggleEnumValues(select) {
+            const row = select.closest('.parameter-row');
+            const enumSection = row.querySelector('.enum-values-section');
+
+            if (select.value === 'ENUM') {
+                enumSection.classList.remove('hidden');
+            } else {
+                enumSection.classList.add('hidden');
+            }
         }
     </script>
 </div>

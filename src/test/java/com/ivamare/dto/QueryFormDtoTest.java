@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ivamare.domain.Query;
 import com.ivamare.domain.QueryType;
-import com.ivamare.domain.QueryVersion;
-import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
 /** Tests for QueryFormDto. */
@@ -23,17 +21,9 @@ class QueryFormDtoTest {
             .queryType(QueryType.SELECT)
             .build();
 
-    QueryVersion version =
-        QueryVersion.builder()
-            .id("version-id")
-            .query(query)
-            .version(1)
-            .configYaml("sql: SELECT 1")
-            .createdAt(LocalDateTime.now())
-            .createdBy("admin")
-            .build();
+    QueryConfig parsedConfig = QueryConfig.builder().sql("SELECT 1").build();
 
-    QueryFormDto dto = QueryFormDto.from(query, version);
+    QueryFormDto dto = QueryFormDto.from(query, parsedConfig);
 
     assertThat(dto.getId()).isEqualTo("test-id");
     assertThat(dto.getName()).isEqualTo("Test Query");
@@ -41,7 +31,8 @@ class QueryFormDtoTest {
     assertThat(dto.getCategory()).isEqualTo("Test Category");
     assertThat(dto.getConnectionName()).isEqualTo("test-conn");
     assertThat(dto.getQueryType()).isEqualTo(QueryType.SELECT);
-    assertThat(dto.getConfigYaml()).isEqualTo("sql: SELECT 1");
+    assertThat(dto.getConfig()).isNotNull();
+    assertThat(dto.getConfig().getSql()).isEqualTo("SELECT 1");
   }
 
   @Test
@@ -63,5 +54,16 @@ class QueryFormDtoTest {
     QueryFormDto dto = QueryFormDto.builder().id("").build();
 
     assertThat(dto.isEdit()).isFalse();
+  }
+
+  @Test
+  void ensureConfigInitialized_createsEmptyConfigAndParameters() {
+    QueryFormDto dto = QueryFormDto.builder().build();
+
+    dto.ensureConfigInitialized();
+
+    assertThat(dto.getConfig()).isNotNull();
+    assertThat(dto.getConfig().getParameters()).isNotNull();
+    assertThat(dto.getConfig().getParameters()).isEmpty();
   }
 }

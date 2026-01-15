@@ -27,4 +27,6 @@ public interface QueryRepository extends JpaRepository<Query, String> {
   List<String> findDistinctCategories();
 
   boolean existsByNameAndIsActiveTrue(String name);
+
+  long countByIsActiveTrue();
 }

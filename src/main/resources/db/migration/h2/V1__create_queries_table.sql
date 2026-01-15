@@ -1,4 +1,4 @@
--- V1: Create queries table
+-- V1: Create queries table (H2)
 -- Stores query template metadata
 
 CREATE SCHEMA IF NOT EXISTS sqlrunner;

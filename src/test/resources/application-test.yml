@@ -16,7 +16,7 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration/h2
     schemas: sqlrunner
     baseline-on-migrate: true
 
@@ -28,3 +28,18 @@ logging:
   level:
     org.flywaydb: WARN
     org.hibernate: WARN
+
+# Test connections
+sqlrunner:
+  connections:
+    databases:
+      test-conn:
+        name: Test Connection (H2)
+        type: H2
+        host: mem
+        database: testdb
+        credential-prefix: TEST_H2
+
+# Set H2 credentials in env-style properties
+TEST_H2_USER: sa
+TEST_H2_PASSWORD: ""

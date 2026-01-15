@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${pageTitle}">Execute Query</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(~{::content})}">
+    <div th:fragment="content">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 th:text="${query.name}" class="text-2xl font-bold text-gray-800">Query Name</h1>
+                <span th:text="${query.queryType}"
+                      th:class="${query.queryType.name() == 'SELECT' ? 'text-green-600' : 'text-orange-600'}"
+                      class="text-sm font-medium">SELECT</span>
+                <span class="text-gray-400 mx-2">|</span>
+                <span class="text-sm text-gray-500" th:text="${query.connectionName}">connection</span>
+            </div>
+            <a th:href="@{'/queries/' + ${query.id}}"
+               class="text-rbc-blue hover:text-rbc-light-blue text-sm">
+                View Details / Edit
+            </a>
+        </div>
+
+        <!-- Parameter Form -->
+        <form th:action="@{'/queries/' + ${query.id} + '/execute'}" method="post" class="mb-6">
+            <div th:if="${parameters != null && !parameters.isEmpty()}" class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div th:each="p : ${parameters}">
+                        <label th:for="${p.name}" class="block text-sm font-medium text-gray-700 mb-1">
+                            <span th:text="${p.displayLabel}">Parameter</span>
+                            <span th:if="${p.required}" class="text-red-500">*</span>
+                        </label>
+
+                        <!-- STRING -->
+                        <input th:if="${p.dataType == 'STRING'}"
+                               type="text"
+                               th:id="${p.name}"
+                               th:name="${p.name}"
+                               th:required="${p.required}"
+                               th:pattern="${p.validation}"
+                               th:value="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                               class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+
+                        <!-- INTEGER -->
+                        <input th:if="${p.dataType == 'INTEGER'}"
+                               type="number"
+                               step="1"
+                               th:id="${p.name}"
+                               th:name="${p.name}"
+                               th:required="${p.required}"
+                               th:value="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                               class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+
+                        <!-- DECIMAL -->
+                        <input th:if="${p.dataType == 'DECIMAL'}"
+                               type="number"
+                               step="0.01"
+                               th:id="${p.name}"
+                               th:name="${p.name}"
+                               th:required="${p.required}"
+                               th:value="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                               class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+
+                        <!-- DATE -->
+                        <input th:if="${p.dataType == 'DATE'}"
+                               type="date"
+                               th:id="${p.name}"
+                               th:name="${p.name}"
+                               th:required="${p.required}"
+                               th:value="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                               class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+
+                        <!-- DATETIME -->
+                        <input th:if="${p.dataType == 'DATETIME'}"
+                               type="datetime-local"
+                               th:id="${p.name}"
+                               th:name="${p.name}"
+                               th:required="${p.required}"
+                               th:value="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                               class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+
+                        <!-- BOOLEAN -->
+                        <div th:if="${p.dataType == 'BOOLEAN'}" class="flex items-center mt-1">
+                            <input type="checkbox"
+                                   th:id="${p.name}"
+                                   th:name="${p.name}"
+                                   th:checked="${submittedParams != null ? submittedParams[p.name] == 'true' : p.defaultValue == 'true'}"
+                                   class="h-4 w-4 text-rbc-blue border-gray-300 rounded focus:ring-rbc-blue">
+                            <span class="ml-2 text-sm text-gray-600">Yes</span>
+                        </div>
+
+                        <!-- ENUM -->
+                        <select th:if="${p.dataType == 'ENUM'}"
+                                th:id="${p.name}"
+                                th:name="${p.name}"
+                                th:required="${p.required}"
+                                class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue">
+                            <option value="">-- Select --</option>
+                            <option th:each="enumVal : ${p.enumValues}"
+                                    th:value="${enumVal.value}"
+                                    th:text="${enumVal.description != null && !enumVal.description.isEmpty() ? enumVal.description : enumVal.value}"
+                                    th:selected="${submittedParams != null && submittedParams[p.name] == enumVal.value}">Option</option>
+                        </select>
+
+                        <!-- LIST_STRING / LIST_INTEGER -->
+                        <textarea th:if="${p.dataType == 'LIST_STRING' or p.dataType == 'LIST_INTEGER'}"
+                                  th:id="${p.name}"
+                                  th:name="${p.name}"
+                                  th:required="${p.required}"
+                                  th:text="${submittedParams != null ? submittedParams[p.name] : p.defaultValue}"
+                                  rows="2"
+                                  placeholder="Values separated by commas"
+                                  class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-1 focus:ring-rbc-blue focus:border-rbc-blue"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit"
+                    class="bg-rbc-blue text-white px-6 py-2 rounded-lg hover:bg-rbc-light-blue transition-colors">
+                Execute
+            </button>
+        </form>
+
+        <!-- Results -->
+        <div th:if="${result != null}">
+            <!-- Success -->
+            <div th:if="${result.success}" class="bg-white rounded-lg shadow">
+                <div class="flex justify-between items-center p-4 border-b">
+                    <div class="text-sm text-gray-600">
+                        <span class="font-semibold text-gray-800" th:text="${result.rowCount}">0</span> rows
+                        <span class="text-gray-400 mx-1">|</span>
+                        <span th:text="${result.executionTimeMs}">0</span>ms
+                    </div>
+                    <form th:action="@{'/queries/' + ${query.id} + '/export-csv'}" method="get" style="display:inline">
+                        <th:block th:each="entry : ${submittedParams}">
+                            <input type="hidden" th:name="${entry.key}" th:value="${entry.value}">
+                        </th:block>
+                        <button type="submit" class="text-green-600 hover:text-green-700 text-sm font-medium">
+                            Export CSV
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Results Table -->
+                <div th:if="${result.rowCount > 0}" class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th th:each="col : ${result.columns}"
+                                    th:text="${col}"
+                                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Column
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr th:each="row, rowStat : ${result.rows}"
+                                th:class="${rowStat.odd} ? 'bg-white' : 'bg-gray-50'">
+                                <td th:each="col : ${result.columns}"
+                                    th:text="${row.get(col)}"
+                                    class="px-4 py-2 text-sm text-gray-900 whitespace-nowrap">
+                                    Value
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${result.rowCount == 0}" class="text-gray-500 text-center py-8">
+                    No results found.
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div th:if="${!result.success}" class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 class="text-red-800 font-medium">Execution Failed</h3>
+                <p th:text="${result.errorMessage}" class="text-red-600 mt-2 text-sm">Error message</p>
+                <p class="text-xs text-red-500 mt-2">
+                    Execution time: <span th:text="${result.executionTimeMs}">0</span>ms
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

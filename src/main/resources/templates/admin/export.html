@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Export Configuration</title>
+</head>
+<body>
+<div th:replace="~{layout/base :: layout(~{::content})}">
+    <div th:fragment="content">
+        <!-- Breadcrumb -->
+        <nav class="mb-4">
+            <ol class="flex text-sm text-gray-500">
+                <li><a href="/admin" class="hover:text-rbc-blue">Administration</a></li>
+                <li class="mx-2">/</li>
+                <li class="text-gray-700">Export</li>
+            </ol>
+        </nav>
+
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Export Configuration</h1>
+
+        <div class="bg-white rounded-lg shadow p-6 max-w-2xl">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Export All Queries</h2>
+                <p class="text-gray-600">
+                    Export all active query configurations to a YAML file. This includes:
+                </p>
+                <ul class="list-disc list-inside text-gray-600 mt-2 ml-4">
+                    <li>Query metadata (name, description, category, connection)</li>
+                    <li>All version history</li>
+                    <li>Parameter configurations</li>
+                    <li>SQL statements</li>
+                </ul>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-yellow-800 font-medium">Security Note</p>
+                        <p class="text-yellow-700 text-sm">Database credentials are never included in exports. Connection names must match the target environment.</p>
+                    </div>
+                </div>
+            </div>
+
+            <a href="/admin/export/download"
+               class="inline-block bg-rbc-blue text-white px-6 py-3 rounded-lg hover:bg-rbc-light-blue transition-colors">
+                <span class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Download Export File
+                </span>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

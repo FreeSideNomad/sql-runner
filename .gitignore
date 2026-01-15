@@ -3,6 +3,7 @@
 
 # Log files
 *.log
+logs/
 
 # Maven
 target/
@@ -79,3 +80,8 @@ lombok.config
 *.key
 credentials.json
 secrets.yml
+
+# H2 Database files (local persistence)
+data/
+*.mv.db
+*.trace.db

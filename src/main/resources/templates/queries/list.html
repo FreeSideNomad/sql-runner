@@ -20,73 +20,62 @@
         <span th:text="${message}">Message</span>
     </div>
 
-    <!-- Empty State -->
-    <div th:if="${queriesByCategory == null or queriesByCategory.empty}" class="bg-white rounded-lg shadow-md p-8 text-center">
-        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-        </svg>
-        <p class="text-lg text-gray-600">No queries available</p>
-        <p class="text-sm text-gray-500 mt-2">Contact an administrator to create query templates.</p>
-    </div>
-
-    <!-- Queries by Category -->
-    <div th:unless="${queriesByCategory == null or queriesByCategory.empty}" class="space-y-6">
-        <div th:each="entry : ${queriesByCategory}" class="bg-white rounded-lg shadow-md overflow-hidden">
-            <!-- Category Header -->
-            <button type="button"
-                    class="w-full text-left px-6 py-4 bg-gray-50 border-b flex justify-between items-center hover:bg-gray-100 transition"
-                    onclick="toggleCategory(this)">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-rbc-blue mr-3 transform transition-transform category-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                    <span class="font-semibold text-rbc-blue" th:text="${entry.key}">Category Name</span>
-                </div>
-                <span class="text-sm text-gray-500" th:text="${entry.value.size()} + ' queries'">0 queries</span>
-            </button>
-
-            <!-- Query List -->
-            <div class="category-content p-4">
-                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div th:each="query : ${entry.value}"
-                         class="border rounded-lg p-4 hover:shadow-md transition bg-white">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-semibold text-gray-900" th:text="${query.name}">Query Name</h3>
-                            <span th:if="${query.queryType.name() == 'SELECT'}"
-                                  class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">SELECT</span>
-                            <span th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
-                                  class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">UPDATE</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3 line-clamp-2" th:text="${query.description ?: 'No description'}">Description</p>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-500" th:text="'Connection: ' + ${query.connectionName}">Connection</span>
-                            <div class="flex gap-2">
-                                <a th:href="@{/queries/{id}(id=${query.id})}"
-                                   class="text-rbc-blue hover:underline font-medium">View</a>
-                                <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')"
-                                   class="text-gray-500 hover:text-rbc-blue">Edit</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Queries Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Empty State -->
+        <div th:if="${queries == null or queries.empty}" class="p-8 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+            <p class="text-lg text-gray-600">No queries available</p>
+            <p class="text-sm text-gray-500 mt-2">Contact an administrator to create query templates.</p>
         </div>
+
+        <!-- Table -->
+        <table th:unless="${queries == null or queries.empty}" class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="query : ${queries}" class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900" th:text="${query.name}">Query Name</div>
+                        <div th:if="${query.description}" class="text-sm text-gray-500 truncate max-w-xs" th:text="${query.description}">Description</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800" th:text="${query.category}">Category</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span th:if="${query.queryType.name() == 'SELECT'}"
+                              class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">SELECT</span>
+                        <span th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+                              class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">UPDATE</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${query.connectionName}">Connection</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-3">
+                            <a th:if="${query.queryType.name() == 'SELECT'}"
+                               th:href="@{/queries/{id}/execute(id=${query.id})}"
+                               class="text-green-600 hover:text-green-800 font-medium">Execute</a>
+                            <a th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+                               th:href="@{/queries/{id}/update(id=${query.id})}"
+                               class="text-orange-600 hover:text-orange-800 font-medium">Run Update</a>
+                            <a th:href="@{/queries/{id}(id=${query.id})}"
+                               class="text-rbc-blue hover:text-rbc-light-blue">View</a>
+                            <a th:href="@{/queries/{id}/edit(id=${query.id})}" sec:authorize="hasRole('ADMIN')"
+                               class="text-gray-500 hover:text-gray-700">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-
-    <script>
-        function toggleCategory(button) {
-            const content = button.nextElementSibling;
-            const arrow = button.querySelector('.category-arrow');
-
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                arrow.classList.remove('-rotate-90');
-            } else {
-                content.style.display = 'none';
-                arrow.classList.add('-rotate-90');
-            }
-        }
-    </script>
 </div>
 </html>
