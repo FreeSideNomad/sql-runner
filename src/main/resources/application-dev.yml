@@ -12,7 +12,7 @@ spring:
         dialect: org.hibernate.dialect.SQLServerDialect
 
   flyway:
-    locations: classpath:db/migration
+    locations: classpath:db/migration/sqlserver
 
   h2:
     console:
@@ -25,3 +25,15 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Override connections for dev profile
+sqlrunner:
+  connections:
+    databases:
+      local-sqlserver:
+        name: Local SQL Server (Docker)
+        type: SQLSERVER
+        host: localhost
+        port: 1433
+        database: sqlrunner
+        credentialPrefix: SQLSERVER

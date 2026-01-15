@@ -163,6 +163,12 @@ public class ExecutionLogService {
     return repository.findById(id).orElse(null);
   }
 
+  /** Find execution log by ID, returning Optional. */
+  @Transactional(readOnly = true)
+  public java.util.Optional<ExecutionLog> findByIdOptional(String id) {
+    return repository.findById(id);
+  }
+
   /** Find execution logs with filters. */
   @Transactional(readOnly = true)
   public Page<ExecutionLog> findWithFilters(

@@ -1,5 +1,11 @@
 package com.ivamare.controller;
 
+import com.ivamare.domain.ExecutionStatus;
+import com.ivamare.repository.ExecutionLogRepository;
+import com.ivamare.repository.QueryRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 /** Controller for authentication-related pages. */
 @Controller
+@RequiredArgsConstructor
 public class AuthController {
+
+  private final QueryRepository queryRepository;
+  private final ExecutionLogRepository executionLogRepository;
 
   @GetMapping("/login")
   public String login(
@@ -35,7 +45,21 @@ public class AuthController {
   }
 
   @GetMapping("/dashboard")
-  public String dashboard() {
+  public String dashboard(Model model) {
+    // Count active queries
+    long queryCount = queryRepository.countByIsActiveTrue();
+
+    // Count today's executions
+    LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+    long todayExecutions = executionLogRepository.countByExecutedAtAfter(startOfDay);
+    long failedToday =
+        executionLogRepository.countByExecutedAtAfterAndStatus(startOfDay, ExecutionStatus.FAILED);
+
+    model.addAttribute("queryCount", queryCount);
+    model.addAttribute("todayExecutions", todayExecutions);
+    model.addAttribute("failedToday", failedToday);
+    model.addAttribute("pageTitle", "Dashboard");
+
     return "dashboard";
   }
 }

@@ -2,10 +2,10 @@ package com.ivamare.dto;
 
 import com.ivamare.domain.Query;
 import com.ivamare.domain.QueryType;
-import com.ivamare.domain.QueryVersion;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,11 +38,11 @@ public class QueryFormDto {
   @NotNull(message = "Query type is required")
   private QueryType queryType;
 
-  @NotBlank(message = "Configuration YAML is required")
-  private String configYaml;
+  // Structured config fields
+  @Builder.Default private QueryConfigFormDto config = new QueryConfigFormDto();
 
-  /** Create form DTO from Query entity and current version. */
-  public static QueryFormDto from(Query query, QueryVersion version) {
+  /** Create form DTO from Query entity and current version config. */
+  public static QueryFormDto from(Query query, QueryConfig parsedConfig) {
     return QueryFormDto.builder()
         .id(query.getId())
         .name(query.getName())
@@ -50,12 +50,22 @@ public class QueryFormDto {
         .category(query.getCategory())
         .connectionName(query.getConnectionName())
         .queryType(query.getQueryType())
-        .configYaml(version.getConfigYaml())
+        .config(QueryConfigFormDto.from(parsedConfig))
         .build();
   }
 
   /** Check if this is an edit (existing query) or create (new query). */
   public boolean isEdit() {
     return id != null && !id.isEmpty();
+  }
+
+  /** Ensure config and parameters list are initialized. */
+  public void ensureConfigInitialized() {
+    if (config == null) {
+      config = new QueryConfigFormDto();
+    }
+    if (config.getParameters() == null) {
+      config.setParameters(new ArrayList<>());
+    }
   }
 }

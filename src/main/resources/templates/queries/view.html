@@ -17,9 +17,15 @@
                class="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
                 Edit
             </a>
-            <a th:href="@{/queries/{id}/execute(id=${query.id})}"
+            <a th:if="${query.queryType.name() == 'SELECT'}"
+               th:href="@{/queries/{id}/execute(id=${query.id})}"
                class="px-4 py-2 bg-rbc-blue text-white font-medium rounded-lg hover:bg-rbc-light-blue transition">
                 Execute
+            </a>
+            <a th:if="${query.queryType.name() == 'UPDATE_WORKFLOW'}"
+               th:href="@{/queries/{id}/update(id=${query.id})}"
+               class="px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition">
+                Run Update
             </a>
         </div>
     </div>

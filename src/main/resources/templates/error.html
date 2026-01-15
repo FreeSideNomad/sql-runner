@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Error ' + ${status}">Error</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rbc-blue': '#003168',
+                        'rbc-light-blue': '#0051a5',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .stack-trace {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .stack-trace .at-line {
+            color: #666;
+        }
+        .stack-trace .at-line:hover {
+            background-color: #f0f0f0;
+        }
+        .stack-trace .cause {
+            color: #c41e3a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-rbc-blue text-white shadow">
+        <div class="container mx-auto px-6 py-4">
+            <a href="/" class="text-xl font-bold">SQL Runner</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Error Alert -->
+        <div class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center mb-4">
+                <svg class="w-8 h-8 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <h1 class="text-2xl font-bold text-red-700">
+                        Error <span th:text="${status}">500</span>
+                    </h1>
+                    <p class="text-red-600" th:text="${error}">Internal Server Error</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p class="text-gray-700"><strong>Path:</strong> <code class="bg-gray-100 px-2 py-1 rounded" th:text="${path}">Unknown</code></p>
+                <p class="text-gray-700 mt-2"><strong>Timestamp:</strong> <span th:text="${timestamp}">Unknown</span></p>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div th:if="${message}" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Message</h2>
+            <div class="bg-red-50 border border-red-200 rounded p-4">
+                <p class="text-red-700 font-mono text-sm" th:text="${message}">Error message</p>
+            </div>
+        </div>
+
+        <!-- Exception Details -->
+        <div th:if="${exception}" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Exception</h2>
+            <div class="bg-gray-50 border border-gray-200 rounded p-4">
+                <p class="text-gray-900 font-mono text-sm font-bold" th:text="${exception}">Exception class</p>
+            </div>
+        </div>
+
+        <!-- Stack Trace -->
+        <div th:if="${trace}" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-800">Stack Trace</h2>
+                <button onclick="copyTrace()" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700">
+                    Copy to Clipboard
+                </button>
+            </div>
+            <div class="bg-gray-900 text-gray-100 rounded p-4 overflow-x-auto">
+                <pre id="stackTrace" class="stack-trace whitespace-pre-wrap" th:text="${trace}">Stack trace</pre>
+            </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Request Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Status Code</p>
+                    <p class="font-mono" th:text="${status}">500</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Error Type</p>
+                    <p class="font-mono" th:text="${error}">Internal Server Error</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Request Path</p>
+                    <p class="font-mono" th:text="${path}">Unknown</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Timestamp</p>
+                    <p class="font-mono" th:text="${timestamp}">Unknown</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex space-x-4">
+            <a href="/" class="px-4 py-2 bg-rbc-blue text-white rounded-lg hover:bg-rbc-light-blue transition">
+                Go to Home
+            </a>
+            <button onclick="history.back()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                Go Back
+            </button>
+        </div>
+    </main>
+
+    <script>
+        function copyTrace() {
+            const trace = document.getElementById('stackTrace').innerText;
+            navigator.clipboard.writeText(trace).then(() => {
+                alert('Stack trace copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

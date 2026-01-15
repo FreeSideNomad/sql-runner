@@ -31,8 +31,7 @@ public interface ExecutionLogRepository extends JpaRepository<ExecutionLog, Stri
           + "(:status IS NULL OR e.status = :status) AND "
           + "(:executionType IS NULL OR e.executionType = :executionType) AND "
           + "(:startDate IS NULL OR e.executedAt >= :startDate) AND "
-          + "(:endDate IS NULL OR e.executedAt <= :endDate) "
-          + "ORDER BY e.executedAt DESC")
+          + "(:endDate IS NULL OR e.executedAt <= :endDate)")
   Page<ExecutionLog> findWithFilters(
       @Param("user") String user,
       @Param("queryId") String queryId,
@@ -45,4 +44,8 @@ public interface ExecutionLogRepository extends JpaRepository<ExecutionLog, Stri
   long countByStatus(ExecutionStatus status);
 
   long countByExecutionType(ExecutionType executionType);
+
+  long countByExecutedAtAfter(LocalDateTime after);
+
+  long countByExecutedAtAfterAndStatus(LocalDateTime after, ExecutionStatus status);
 }

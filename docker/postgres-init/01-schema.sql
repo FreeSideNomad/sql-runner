@@ -1,6 +1,6 @@
 -- PostgreSQL schema for SQL Runner test data
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     email VARCHAR(200),
@@ -10,7 +10,7 @@ CREATE TABLE customers (
     updated_at TIMESTAMP
 );
 
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id VARCHAR(36) PRIMARY KEY,
     customer_id VARCHAR(36) NOT NULL REFERENCES customers(id),
     account_number VARCHAR(50) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE accounts (
     closed_at TIMESTAMP
 );
 
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id VARCHAR(36) PRIMARY KEY,
     account_id VARCHAR(36) NOT NULL REFERENCES accounts(id),
     transaction_type VARCHAR(20) NOT NULL,
@@ -33,8 +33,8 @@ CREATE TABLE transactions (
 );
 
 -- Indexes
-CREATE INDEX idx_customers_region ON customers(region);
-CREATE INDEX idx_customers_status ON customers(status);
-CREATE INDEX idx_accounts_customer ON accounts(customer_id);
-CREATE INDEX idx_transactions_account ON transactions(account_id);
-CREATE INDEX idx_transactions_executed ON transactions(executed_at);
+CREATE INDEX IF NOT EXISTS idx_customers_region ON customers(region);
+CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status);
+CREATE INDEX IF NOT EXISTS idx_accounts_customer ON accounts(customer_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_executed ON transactions(executed_at);

@@ -2,6 +2,7 @@ package com.ivamare.service;
 
 import com.ivamare.domain.Query;
 import com.ivamare.domain.QueryVersion;
+import com.ivamare.dto.QueryConfig;
 import com.ivamare.dto.QueryDto;
 import com.ivamare.dto.QueryFormDto;
 import com.ivamare.repository.QueryRepository;
@@ -25,6 +26,7 @@ public class QueryService {
 
   private final QueryRepository queryRepository;
   private final QueryVersionRepository versionRepository;
+  private final ConfigYamlService configYamlService;
 
   /**
    * Get all active queries grouped by category.
@@ -36,6 +38,16 @@ public class QueryService {
     return queryRepository.findByIsActiveTrueOrderByNameAsc().stream()
         .map(QueryDto::from)
         .collect(Collectors.groupingBy(QueryDto::getCategory));
+  }
+
+  /**
+   * Get all active queries sorted by name.
+   *
+   * @return List of queries sorted by name
+   */
+  @Transactional(readOnly = true)
+  public List<QueryDto> getAllQueriesSortedByName() {
+    return queryRepository.findByIsActiveTrueOrderByNameAsc().stream().map(QueryDto::from).toList();
   }
 
   /**
@@ -77,7 +89,7 @@ public class QueryService {
    * Get query form DTO for editing, including current version config.
    *
    * @param id Query ID
-   * @return QueryFormDto with current configuration
+   * @return QueryFormDto with current configuration parsed into structured form
    */
   @Transactional(readOnly = true)
   public QueryFormDto getQueryForEdit(String id) {
@@ -89,7 +101,8 @@ public class QueryService {
                 () ->
                     new EntityNotFoundException(
                         "Version not found for query: " + id + " v" + query.getCurrentVersion()));
-    return QueryFormDto.from(query, currentVersion);
+    QueryConfig parsedConfig = configYamlService.parse(currentVersion.getConfigYaml());
+    return QueryFormDto.from(query, parsedConfig);
   }
 
   /**
@@ -121,6 +134,9 @@ public class QueryService {
   public Query createQuery(QueryFormDto form, String createdBy) {
     log.info("Creating query '{}' by user '{}'", form.getName(), createdBy);
 
+    // Convert form config to YAML
+    String configYaml = configYamlService.toYaml(form.getConfig().toQueryConfig());
+
     Query query =
         Query.builder()
             .id(UUID.randomUUID().toString())
@@ -139,7 +155,7 @@ public class QueryService {
             .id(UUID.randomUUID().toString())
             .query(query)
             .version(1)
-            .configYaml(form.getConfigYaml())
+            .configYaml(configYaml)
             .createdBy(createdBy)
             .build();
 
@@ -164,6 +180,9 @@ public class QueryService {
 
     Query query = getQuery(id);
 
+    // Convert form config to YAML
+    String configYaml = configYamlService.toYaml(form.getConfig().toQueryConfig());
+
     // Update metadata
     query.setName(form.getName());
     query.setDescription(form.getDescription());
@@ -180,7 +199,7 @@ public class QueryService {
             .id(UUID.randomUUID().toString())
             .query(query)
             .version(newVersionNum)
-            .configYaml(form.getConfigYaml())
+            .configYaml(configYaml)
             .createdAt(LocalDateTime.now())
             .createdBy(updatedBy)
             .build();

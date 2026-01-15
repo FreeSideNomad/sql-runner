@@ -1,4 +1,4 @@
--- V3: Create execution_logs table
+-- V3: Create execution_logs table (H2)
 -- Stores audit trail for all query executions
 
 CREATE TABLE sqlrunner.execution_logs (

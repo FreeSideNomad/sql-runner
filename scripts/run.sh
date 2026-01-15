@@ -12,6 +12,18 @@ LOG_DIR="$PROJECT_DIR/logs"
 LOG_FILE="$LOG_DIR/app.log"
 APP_PORT=9090
 
+# Database credentials for local Docker containers
+export LOCAL_SQLSERVER_USER="sa"
+export LOCAL_SQLSERVER_PASSWORD="SqlRunner123!"
+export LOCAL_POSTGRES_USER="sqlrunner"
+export LOCAL_POSTGRES_PASSWORD="SqlRunner123!"
+export LOCAL_DB2_USER="db2inst1"
+export LOCAL_DB2_PASSWORD="SqlRunner123!"
+
+# SQL Server credentials for app datasource (used by dev profile)
+export SQLSERVER_USER="sa"
+export SQLSERVER_PASSWORD="SqlRunner123!"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -68,10 +80,16 @@ echo ""
 echo "============================================"
 echo "  SQL Runner starting..."
 echo "  URL: http://localhost:$APP_PORT"
+echo "  Login: admin/admin, updater/updater, reader/reader"
 echo "  H2 Console: http://localhost:$APP_PORT/h2-console"
 echo "  Log: $LOG_FILE"
+echo ""
+echo "  Available Connections:"
+echo "    - Local SQL Server (Docker) - localhost:1433"
+echo "    - Local PostgreSQL (Docker) - localhost:5432"
+echo "    - Local DB2 (Docker) - localhost:50000"
 echo "============================================"
 echo ""
 
-# Run with output to both console and log file
-./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Xmx512m" 2>&1 | tee "$LOG_FILE"
+# Run with output to both console and log file (dev profile uses SQL Server)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev -Dspring-boot.run.jvmArguments="-Xmx512m" 2>&1 | tee "$LOG_FILE"

@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 import com.ivamare.domain.Query;
 import com.ivamare.domain.QueryType;
 import com.ivamare.domain.QueryVersion;
+import com.ivamare.dto.QueryConfig;
+import com.ivamare.dto.QueryConfigFormDto;
 import com.ivamare.dto.QueryDto;
 import com.ivamare.dto.QueryFormDto;
 import com.ivamare.repository.QueryRepository;
@@ -30,12 +32,13 @@ class QueryServiceTest {
 
   @Mock private QueryRepository queryRepository;
   @Mock private QueryVersionRepository versionRepository;
+  @Mock private ConfigYamlService configYamlService;
 
   private QueryService queryService;
 
   @BeforeEach
   void setUp() {
-    queryService = new QueryService(queryRepository, versionRepository);
+    queryService = new QueryService(queryRepository, versionRepository, configYamlService);
   }
 
   @Test
@@ -75,6 +78,7 @@ class QueryServiceTest {
 
   @Test
   void createQuery_savesQueryAndVersion() {
+    QueryConfigFormDto config = QueryConfigFormDto.builder().sql("SELECT 1").build();
     QueryFormDto form =
         QueryFormDto.builder()
             .name("New Query")
@@ -82,9 +86,10 @@ class QueryServiceTest {
             .category("Test")
             .connectionName("test-conn")
             .queryType(QueryType.SELECT)
-            .configYaml("sql: SELECT 1")
+            .config(config)
             .build();
 
+    when(configYamlService.toYaml(any(QueryConfig.class))).thenReturn("sql: SELECT 1");
     when(queryRepository.save(any(Query.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -99,6 +104,7 @@ class QueryServiceTest {
     assertThat(result.getVersions().get(0).getConfigYaml()).isEqualTo("sql: SELECT 1");
 
     verify(queryRepository).save(any(Query.class));
+    verify(configYamlService).toYaml(any(QueryConfig.class));
   }
 
   @Test
@@ -106,6 +112,8 @@ class QueryServiceTest {
     Query existingQuery = createQuery("test-id", "Old Name", "Old Category");
     existingQuery.setCurrentVersion(1);
 
+    QueryConfigFormDto config =
+        QueryConfigFormDto.builder().updateSql("UPDATE table SET x=1").build();
     QueryFormDto form =
         QueryFormDto.builder()
             .id("test-id")
@@ -114,9 +122,11 @@ class QueryServiceTest {
             .category("New Category")
             .connectionName("new-conn")
             .queryType(QueryType.UPDATE_WORKFLOW)
-            .configYaml("sql: UPDATE table SET x=1")
+            .config(config)
             .build();
 
+    when(configYamlService.toYaml(any(QueryConfig.class)))
+        .thenReturn("updateSql: UPDATE table SET x=1");
     when(queryRepository.findById("test-id")).thenReturn(Optional.of(existingQuery));
     when(queryRepository.save(any(Query.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -134,7 +144,7 @@ class QueryServiceTest {
     verify(versionRepository).save(versionCaptor.capture());
     QueryVersion savedVersion = versionCaptor.getValue();
     assertThat(savedVersion.getVersion()).isEqualTo(2);
-    assertThat(savedVersion.getConfigYaml()).isEqualTo("sql: UPDATE table SET x=1");
+    assertThat(savedVersion.getConfigYaml()).isEqualTo("updateSql: UPDATE table SET x=1");
   }
 
   @Test
@@ -170,14 +180,18 @@ class QueryServiceTest {
             .createdBy("admin")
             .build();
 
+    QueryConfig parsedConfig = QueryConfig.builder().sql("SELECT * FROM table").build();
+
     when(queryRepository.findById("test-id")).thenReturn(Optional.of(query));
     when(versionRepository.findByQueryIdAndVersion("test-id", 2)).thenReturn(Optional.of(version));
+    when(configYamlService.parse("sql: SELECT * FROM table")).thenReturn(parsedConfig);
 
     QueryFormDto result = queryService.getQueryForEdit("test-id");
 
     assertThat(result.getId()).isEqualTo("test-id");
     assertThat(result.getName()).isEqualTo("Test Query");
-    assertThat(result.getConfigYaml()).isEqualTo("sql: SELECT * FROM table");
+    assertThat(result.getConfig()).isNotNull();
+    assertThat(result.getConfig().getSql()).isEqualTo("SELECT * FROM table");
   }
 
   @Test

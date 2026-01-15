@@ -10,7 +10,9 @@
 
 services:
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    build:
+      context: ./docker/sqlserver-init
+      dockerfile: Dockerfile
     platform: linux/amd64
     container_name: sqlrunner-sqlserver
     environment:
@@ -21,7 +23,6 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
-      - ./docker/sqlserver-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "SqlRunner123!" -C -Q "SELECT 1"
       interval: 10s
@@ -54,7 +55,7 @@ services:
     environment:
       LICENSE: accept
       DB2INST1_PASSWORD: "SqlRunner123!"
-      DBNAME: sqlrunner
+      DBNAME: TESTDB
       BLU: "false"
       ENABLE_ORACLE_COMPATIBILITY: "false"
     ports:
@@ -63,7 +64,7 @@ services:
       - db2-data:/database
       - ./docker/db2-init:/var/custom
     healthcheck:
-      test: ["CMD", "/opt/ibm/db2/V11.5/bin/db2", "connect", "to", "sqlrunner"]
+      test: ["CMD", "/opt/ibm/db2/V11.5/bin/db2", "connect", "to", "TESTDB"]
       interval: 30s
       timeout: 10s
       retries: 10
