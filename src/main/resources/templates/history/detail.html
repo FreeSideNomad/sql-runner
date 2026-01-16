@@ -151,7 +151,7 @@
 
             <!-- Execute Rollback (only if not already rolled back) -->
             <form th:if="${canRollback}"
-                  th:action="@{/queries/{qid}/update/rollback/{eid}(qid=${log.queryId},eid=${log.id})}"
+                  th:action="@{/queries/update/rollback/{eid}(eid=${log.id})}"
                   method="post"
                   class="inline"
                   onsubmit="return confirm('Are you sure you want to rollback this update? This will restore the original values for all affected rows.');">

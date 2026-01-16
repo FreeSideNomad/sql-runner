@@ -375,10 +375,18 @@
             const queryType = document.getElementById('queryType').value;
             const selectSection = document.getElementById('selectSqlSection');
             const updateSection = document.getElementById('updateSqlSection');
+            const selectFields = selectSection.querySelectorAll('input, select, textarea');
+            const updateFields = updateSection.querySelectorAll('input, select, textarea');
 
             if (queryType === 'UPDATE_WORKFLOW') {
                 selectSection.classList.add('hidden');
                 updateSection.classList.remove('hidden');
+                selectFields.forEach(field => {
+                    field.disabled = true;
+                });
+                updateFields.forEach(field => {
+                    field.disabled = false;
+                });
                 // Refresh CodeMirror editors when section becomes visible
                 setTimeout(function() {
                     document.querySelectorAll('#updateSqlSection .CodeMirror').forEach(function(cm) {
@@ -390,6 +398,12 @@
             } else {
                 selectSection.classList.remove('hidden');
                 updateSection.classList.add('hidden');
+                updateFields.forEach(field => {
+                    field.disabled = true;
+                });
+                selectFields.forEach(field => {
+                    field.disabled = false;
+                });
                 // Refresh CodeMirror editor when section becomes visible
                 setTimeout(function() {
                     document.querySelectorAll('#selectSqlSection .CodeMirror').forEach(function(cm) {

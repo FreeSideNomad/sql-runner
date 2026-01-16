@@ -1,5 +1,6 @@
 package com.ivamare.service;
 
+import com.ivamare.config.ConnectionProperties.ConnectionConfig;
 import com.ivamare.domain.*;
 import com.ivamare.dto.ExecutionResult;
 import com.ivamare.dto.QueryConfig;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,13 +55,16 @@ public class QueryExecutionService {
     // Get DataSource and create template
     DataSource ds = connectionRegistry.getDataSource(query.getConnectionName());
     NamedParameterJdbcTemplate jdbc = new NamedParameterJdbcTemplate(ds);
+    ConnectionConfig connConfig = connectionRegistry.getConnectionConfig(query.getConnectionName());
 
     String executionId = UUID.randomUUID().toString();
     long startTime = System.currentTimeMillis();
 
     try {
       // Execute query
-      String sql = config.getExecutableSql();
+      String sql =
+          adaptSqlForDatabase(
+              config.getExecutableSql(), connConfig != null ? connConfig.getType() : null);
       List<Map<String, Object>> results = jdbc.queryForList(sql, params);
       long duration = System.currentTimeMillis() - startTime;
 
@@ -237,6 +242,21 @@ public class QueryExecutionService {
     }
 
     return builder.build();
+  }
+
+  String adaptSqlForDatabase(String sql, DatabaseType dbType) {
+    if (sql == null || dbType == null) {
+      return sql;
+    }
+    if (dbType == DatabaseType.SQLSERVER) {
+      return rewriteSqlServerTopParameter(sql);
+    }
+    return sql;
+  }
+
+  private String rewriteSqlServerTopParameter(String sql) {
+    Pattern topParamPattern = Pattern.compile("\\bTOP\\s*:(\\w+)", Pattern.CASE_INSENSITIVE);
+    return topParamPattern.matcher(sql).replaceAll("TOP (:$1)");
   }
 
   /**

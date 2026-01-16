@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -184,8 +186,9 @@ public class SqlScriptGenerator {
     for (String key : sortedKeys) {
       Object value = params.get(key);
       String stringValue = formatValue(value, dbType);
-      // Regex to match :paramName not followed by alphanumeric chars
-      resolved = resolved.replaceAll(":" + key + "\\b", stringValue);
+      Pattern pattern = Pattern.compile(":" + Pattern.quote(key) + "\\b", Pattern.CASE_INSENSITIVE);
+      Matcher matcher = pattern.matcher(resolved);
+      resolved = matcher.replaceAll(Matcher.quoteReplacement(stringValue));
     }
     return resolved;
   }

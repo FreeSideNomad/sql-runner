@@ -68,11 +68,15 @@ public class UpdateWorkflowService {
 
     DataSource ds = connectionRegistry.getDataSource(query.getConnectionName());
     NamedParameterJdbcTemplate jdbc = new NamedParameterJdbcTemplate(ds);
+    ConnectionConfig connConfig = connectionRegistry.getConnectionConfig(query.getConnectionName());
 
     long startTime = System.currentTimeMillis();
 
     try {
-      List<Map<String, Object>> results = jdbc.queryForList(config.getSelectSql(), params);
+      String selectSql =
+          queryExecutionService.adaptSqlForDatabase(
+              config.getSelectSql(), connConfig != null ? connConfig.getType() : null);
+      List<Map<String, Object>> results = jdbc.queryForList(selectSql, params);
       long duration = System.currentTimeMillis() - startTime;
 
       if (results.size() > MAX_PREVIEW_ROWS) {
