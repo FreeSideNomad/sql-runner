@@ -41,7 +41,7 @@
     <!-- Grouped Queries -->
     <div th:unless="${groupedQueries == null or groupedQueries.empty}" class="space-y-4">
         <!-- Connection Groups -->
-        <div th:each="connectionEntry, connStat : ${groupedQueries}" class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div th:each="connectionEntry, connStat : ${groupedQueries.entrySet()}" class="bg-white rounded-lg shadow-md overflow-hidden">
             <!-- Connection Header (Collapsible) -->
             <button type="button"
                     class="connection-toggle w-full px-6 py-4 flex items-center justify-between bg-rbc-blue text-white hover:bg-blue-800 transition cursor-pointer"
@@ -66,7 +66,7 @@
             <!-- Connection Content (Categories) -->
             <div class="connection-content" th:data-connection="${connStat.index}">
                 <!-- Category Groups -->
-                <div th:each="categoryEntry, catStat : ${connectionEntry.value}" class="border-b border-gray-200 last:border-b-0">
+                <div th:each="categoryEntry, catStat : ${connectionEntry.value.entrySet()}" class="border-b border-gray-200 last:border-b-0">
                     <!-- Category Header (Collapsible) -->
                     <button type="button"
                             class="category-toggle w-full px-6 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer"

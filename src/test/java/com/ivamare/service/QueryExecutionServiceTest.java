@@ -3,6 +3,7 @@ package com.ivamare.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.ivamare.domain.DatabaseType;
 import com.ivamare.dto.QueryConfig;
 import com.ivamare.dto.QueryConfig.ParameterConfig;
 import java.math.BigDecimal;
@@ -118,6 +119,24 @@ class QueryExecutionServiceTest {
     Map<String, Object> converted = executionService.convertParameters(raw, configs);
 
     assertThat(converted.get("count")).isEqualTo(42);
+  }
+
+  @Test
+  void adaptSqlForDatabase_sqlServerTopParameter_wrapsWithParens() {
+    String sql = "SELECT TOP :n id FROM accounts";
+
+    String adapted = executionService.adaptSqlForDatabase(sql, DatabaseType.SQLSERVER);
+
+    assertThat(adapted).contains("TOP (:n)");
+  }
+
+  @Test
+  void adaptSqlForDatabase_nonSqlServer_doesNotChangeSql() {
+    String sql = "SELECT TOP :n id FROM accounts";
+
+    String adapted = executionService.adaptSqlForDatabase(sql, DatabaseType.POSTGRES);
+
+    assertThat(adapted).isEqualTo(sql);
   }
 
   @Test

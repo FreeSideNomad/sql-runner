@@ -44,6 +44,22 @@ class SqlScriptGeneratorTest {
   }
 
   @Test
+  void generateScript_standardMode_replacesParams_caseInsensitive() {
+    QueryConfig config =
+        QueryConfig.builder()
+            .updateBindingMode(UpdateBindingMode.STANDARD)
+            .updateSql("UPDATE test SET VAL = :VAL WHERE ID = :ID")
+            .build();
+
+    Map<String, Object> params = Map.of("val", "new_value", "id", 123);
+
+    String script =
+        generator.generateScript(config, params, Collections.emptyList(), DatabaseType.SQLSERVER);
+
+    assertThat(script).contains("UPDATE test SET VAL = 'new_value' WHERE ID = 123");
+  }
+
+  @Test
   void generateScript_batchMode_generatesCorrectSql() {
     QueryConfig config =
         QueryConfig.builder()
